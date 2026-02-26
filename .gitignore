@@ -1,0 +1,54 @@
+# --- Python ---
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.venv/
+venv/
+env/
+ENV/
+pip-wheel-metadata/
+*.egg-info/
+dist/
+build/
+
+# --- Django ---
+*.log
+db.sqlite3
+db.sqlite3-journal
+media/
+staticfiles/
+
+# Local settings / secrets
+.env
+.env.*
+!.env.example
+
+# Django migrations (KEEP these; do NOT ignore)
+# (intentionally blank)
+
+# --- Unit test / coverage ---
+.coverage
+htmlcov/
+.pytest_cache/
+.tox/
+coverage.xml
+
+# --- Jupyter ---
+.ipynb_checkpoints/
+
+# --- VS Code ---
+.vscode/
+!.vscode/extensions.json
+!.vscode/settings.json
+!.vscode/launch.json
+
+# --- macOS ---
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# --- Conda ---
+conda-meta/
+
+psycopg2-binary>=2.9,<3
