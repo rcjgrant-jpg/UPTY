@@ -1,54 +1,86 @@
-# --- Python ---
-__pycache__/
+# ==== Python ====
 *.py[cod]
 *$py.class
+__pycache__/
 *.so
-.venv/
+
+# ==== Virtual Environments ====
 venv/
 env/
+.venv/
 ENV/
-pip-wheel-metadata/
-*.egg-info/
-dist/
-build/
 
-# --- Django ---
+# ==== Conda ====
+.conda/
+
+# ==== Django ====
 *.log
+local_settings.py
 db.sqlite3
-db.sqlite3-journal
+*.pot
+*.pyc
 media/
+
+# ==== Static files (collected) ====
 staticfiles/
+static_collected/
 
-# Local settings / secrets
+# ==== Environment Variables (SECRETS - NEVER COMMIT) ====
 .env
-.env.*
-!.env.example
+.env.local
+.env.production
 
-# Django migrations (KEEP these; do NOT ignore)
-# (intentionally blank)
+# ==== IDE: IntelliJ / PyCharm ====
+.idea/
+*.iml
+*.iws
+*.ipr
+out/
 
-# --- Unit test / coverage ---
+# ==== IDE: VS Code ====
+.vscode/
+*.code-workspace
+
+# ==== IDE: Other ====
+*.swp
+*.swo
+*~
+.project
+.pydevproject
+.settings/
+
+# ==== macOS ====
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+
+# ==== Windows ====
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# ==== Testing ====
 .coverage
 htmlcov/
 .pytest_cache/
 .tox/
-coverage.xml
 
-# --- Jupyter ---
+# ==== Build ====
+build/
+dist/
+*.egg-info/
+*.egg
+
+# ==== Jupyter Notebooks ====
 .ipynb_checkpoints/
 
-# --- VS Code ---
-.vscode/
-!.vscode/extensions.json
-!.vscode/settings.json
-!.vscode/launch.json
+# ==== Node (if using React in same repo) ====
+node_modules/
+npm-debug.log
+yarn-error.log
+.pnpm-store/
 
-# --- macOS ---
-.DS_Store
-.AppleDouble
-.LSOverride
-
-# --- Conda ---
-conda-meta/
-
-psycopg2-binary>=2.9,<3
+# ==== React build ====
+frontend/build/
+frontend/dist/
