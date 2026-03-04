@@ -6,6 +6,7 @@ import MonitorDetailPage from "./pages/MonitorDetailPage";
 import IncidentsPage from "./pages/IncidentsPage";
 import NewMonitorPage from "./pages/NewMonitorPage";
 import SettingsPage from "./pages/SettingsPage";
+import TeamPage from "./pages/TeamPage";
 
 export default function App() {
   return (
@@ -21,6 +22,7 @@ export default function App() {
       <Route path="/incidents" element={<IncidentsPage />} />
       <Route path="/monitors/new" element={<NewMonitorPage />} />
       <Route path="/settings" element={<SettingsPage />} />
+      <Route path="/team" element={<TeamPage />} />
 
       <Route path="*" element={<div>Not found</div>} />
     </Routes>

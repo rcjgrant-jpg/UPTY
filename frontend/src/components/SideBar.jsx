@@ -4,6 +4,7 @@ export default function Sidebar() {
   const navItems = [
     { to: "/dashboard", label: "Dashboard" },
     { to: "/incidents", label: "Incidents" },
+    { to: "/team", label: "Team" },
     // Add later when you create the route:
     // { to: "/team", label: "Team" },
   ];

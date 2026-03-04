@@ -1,7 +1,9 @@
 import { useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import Sidebar from "../components/SideBar";
 
 export default function Dashboard() {
+  const navigate = useNavigate();
   // In real app this will come from your API
   const [monitors] = useState([
     {
@@ -23,7 +25,7 @@ export default function Dashboard() {
     {
       id: "3",
       url: "www.mysite.com",
-      path: "/",
+      path: "/health",
       status: "UP",
       latency: "89ms",
       lastCheck: "45s ago",
@@ -52,7 +54,7 @@ export default function Dashboard() {
   };
 
   const handleNewMonitor = () => {
-    console.log("Create new monitor");
+    navigate("/monitors/new");
   };
 
   const handleAddFirstMonitor = () => {
