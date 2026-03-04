@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import Sidebar from "../components/SideBar";
 
 export default function Dashboard() {
   // In real app this will come from your API
@@ -72,34 +73,8 @@ export default function Dashboard() {
         
         <div className="grid gap-6 md:grid-cols-[240px_1fr]">
           {/* Sidebar */}
-          <aside className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm">
-            <div className="flex items-center gap-3">
-              <div className="grid h-10 w-10 place-items-center rounded-2xl bg-gray-100 text-gray-700 font-semibold">
-                U
-              </div>
-              <div>
-                <div className="text-sm font-semibold text-gray-900">Upty</div>
-                <div className="text-xs text-gray-500">upty.app/dashboard</div>
-              </div>
-            </div>
-
-            <nav className="mt-6 space-y-1">
-              {navItems.map((item) => (
-                <button
-                  key={item.label}
-                  onClick={item.onClick}
-                  className={[
-                    "w-full rounded-xl px-3 py-2 text-left text-sm",
-                    item.active
-                      ? "bg-gray-100 font-semibold text-gray-900"
-                      : "text-gray-600 hover:bg-gray-50",
-                  ].join(" ")}
-                >
-                  {item.label}
-                </button>
-              ))}
-            </nav>
-          </aside>
+          
+          <Sidebar />
 
           {/* Main */}
           <main className="space-y-4">
