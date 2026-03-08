@@ -4,7 +4,7 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from django.contrib.auth import authenticate, login, logout
-
+from django.views.decorators.csrf import ensure_csrf_cookie
 from .models import User, Team, TeamMember
 from .serializers import UserSerializer, TeamSerializer
 
@@ -130,3 +130,9 @@ def me(request):
             'name': team.name
         } if team else None
     })
+
+@api_view(['GET'])
+@permission_classes([AllowAny])
+@ensure_csrf_cookie
+def csrf(request):
+    return Response({'message': 'CSRF cookie set'})
