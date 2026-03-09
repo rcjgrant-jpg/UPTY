@@ -12,6 +12,7 @@ https://docs.djangoproject.com/en/4.2/ref/settings/
 import os
 from pathlib import Path
 from dotenv import load_dotenv
+import dj_database_url
 
 if os.environ.get('DEBUG') == 'False':
     load_dotenv('.env.prod')
@@ -106,8 +107,6 @@ WSGI_APPLICATION = 'internet_tech_project.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
 
-
-import dj_database_url
 
 DATABASES = {
     'default': dj_database_url.config(
