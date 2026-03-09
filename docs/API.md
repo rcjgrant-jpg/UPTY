@@ -10,19 +10,19 @@ Base URL: `/api/`
 
 Creates a new user and team.
 
-**Auth required:** No
+Auth required: No
 
-**Request body:**
-```json
+Request body:
+ 
 {
   "email": "user@example.com",
   "password": "securepassword123",
   "team_name": "My Startup"
 }
-```
+ 
 
-**Success response (201):**
-```json
+Success response (201):
+ 
 {
   "id": 1,
   "email": "user@example.com",
@@ -31,14 +31,14 @@ Creates a new user and team.
     "name": "My Startup"
   }
 }
-```
+ 
 
-**Error response (400):**
-```json
+Error response (400):
+ 
 {
   "error": "Email already exists"
 }
-```
+ 
 
 ---
 
@@ -46,18 +46,18 @@ Creates a new user and team.
 
 Logs in a user.
 
-**Auth required:** No
+Auth required: No
 
-**Request body:**
-```json
+Request body:
+ 
 {
   "email": "user@example.com",
   "password": "securepassword123"
 }
-```
+ 
 
-**Success response (200):**
-```json
+Success response (200):
+ 
 {
   "id": 1,
   "email": "user@example.com",
@@ -66,14 +66,14 @@ Logs in a user.
     "name": "My Startup"
   }
 }
-```
+ 
 
-**Error response (401):**
-```json
+Error response (401):
+ 
 {
   "error": "Invalid credentials"
 }
-```
+ 
 
 ---
 
@@ -81,16 +81,16 @@ Logs in a user.
 
 Logs out the current user.
 
-**Auth required:** Yes
+Auth required: Yes
 
-**Request body:** None
+Request body: None
 
-**Success response (200):**
-```json
+Success response (200):
+ 
 {
   "message": "Logged out successfully"
 }
-```
+ 
 
 ---
 
@@ -98,10 +98,10 @@ Logs out the current user.
 
 Gets current logged-in user info.
 
-**Auth required:** Yes
+Auth required: Yes
 
-**Success response (200):**
-```json
+Success response (200):
+ 
 {
   "id": 1,
   "email": "user@example.com",
@@ -110,7 +110,7 @@ Gets current logged-in user info.
     "name": "My Startup"
   }
 }
-```
+ 
 
 ---
 
@@ -120,10 +120,10 @@ Gets current logged-in user info.
 
 Lists all monitors for the user's team. Sorted: DOWN first, then by last checked.
 
-**Auth required:** Yes
+Auth required: Yes
 
-**Success response (200):**
-```json
+Success response (200):
+ 
 {
   "monitors": [
     {
@@ -150,7 +150,7 @@ Lists all monitors for the user's team. Sorted: DOWN first, then by last checked
     }
   ]
 }
-```
+ 
 
 ---
 
@@ -158,10 +158,10 @@ Lists all monitors for the user's team. Sorted: DOWN first, then by last checked
 
 Creates a new monitor.
 
-**Auth required:** Yes
+Auth required: Yes
 
-**Request body:**
-```json
+Request body:
+ 
 {
   "url": "https://mysite.com/health",
   "interval": 60,
@@ -169,7 +169,7 @@ Creates a new monitor.
   "expected_status": 200,
   "failure_threshold": 3
 }
-```
+ 
 
 Note: Only `url` is required. Others have defaults:
 - interval: 60 (seconds)
@@ -177,8 +177,8 @@ Note: Only `url` is required. Others have defaults:
 - expected_status: 200
 - failure_threshold: 3
 
-**Success response (201):**
-```json
+Success response (201):
+ 
 {
   "id": 3,
   "url": "https://mysite.com/health",
@@ -194,14 +194,14 @@ Note: Only `url` is required. Others have defaults:
     "email": "user@example.com"
   }
 }
-```
+ 
 
-**Error response (400):**
-```json
+Error response (400):
+ 
 {
   "error": "Invalid URL format"
 }
-```
+ 
 
 ---
 
@@ -209,10 +209,10 @@ Note: Only `url` is required. Others have defaults:
 
 Gets a single monitor with recent results.
 
-**Auth required:** Yes
+Auth required: Yes
 
-**Success response (200):**
-```json
+Success response (200):
+ 
 {
   "id": 1,
   "url": "https://api.example.com/health",
@@ -244,14 +244,14 @@ Gets a single monitor with recent results.
     }
   ]
 }
-```
+ 
 
-**Error response (404):**
-```json
+Error response (404):
+ 
 {
   "error": "Monitor not found"
 }
-```
+ 
 
 ---
 
@@ -259,16 +259,16 @@ Gets a single monitor with recent results.
 
 Deletes a monitor.
 
-**Auth required:** Yes
+Auth required: Yes
 
-**Success response (204):** No content
+Success response (204): No content
 
-**Error response (404):**
-```json
+Error response (404):
+ 
 {
   "error": "Monitor not found"
 }
-```
+ 
 
 ---
 
@@ -278,10 +278,10 @@ Deletes a monitor.
 
 Lists all incidents for the user's team.
 
-**Auth required:** Yes
+Auth required: Yes
 
-**Success response (200):**
-```json
+Success response (200):
+ 
 {
   "incidents": [
     {
@@ -311,7 +311,7 @@ Lists all incidents for the user's team.
     }
   ]
 }
-```
+ 
 
 ---
 
@@ -319,12 +319,12 @@ Lists all incidents for the user's team.
 
 Marks an incident as resolved.
 
-**Auth required:** Yes
+Auth required: Yes
 
-**Request body:** None
+Request body: None
 
-**Success response (200):**
-```json
+Success response (200):
+ 
 {
   "id": 1,
   "monitor": {
@@ -339,14 +339,14 @@ Marks an incident as resolved.
     "email": "user@example.com"
   }
 }
-```
+ 
 
-**Error response (400):**
-```json
+Error response (400):
+ 
 {
   "error": "Incident already resolved"
 }
-```
+ 
 
 ---
 
@@ -356,10 +356,10 @@ Marks an incident as resolved.
 
 Gets team info and members.
 
-**Auth required:** Yes
+Auth required: Yes
 
-**Success response (200):**
-```json
+Success response (200):
+ 
 {
   "id": 1,
   "name": "My Startup",
@@ -376,7 +376,7 @@ Gets team info and members.
     }
   ]
 }
-```
+ 
 
 ---
 
@@ -384,18 +384,18 @@ Gets team info and members.
 
 Generates an invite link (expires in 7 days).
 
-**Auth required:** Yes
+Auth required: Yes
 
-**Request body:** None
+Request body: None
 
-**Success response (201):**
-```json
+Success response (201):
+ 
 {
   "token": "a8f3k2x9...",
   "url": "https://upty.app/invite/a8f3k2x9...",
   "expires_at": "2026-03-08T15:00:00Z"
 }
-```
+ 
 
 ---
 
@@ -403,25 +403,25 @@ Generates an invite link (expires in 7 days).
 
 Validates an invite token (public endpoint).
 
-**Auth required:** No
+Auth required: No
 
-**Success response (200):**
-```json
+Success response (200):
+ 
 {
   "valid": true,
   "team_name": "My Startup",
   "invited_by": "user@example.com",
   "expires_at": "2026-03-08T15:00:00Z"
 }
-```
+ 
 
-**Error response (400):**
-```json
+Error response (400):
+ 
 {
   "valid": false,
   "error": "Invite expired or invalid"
 }
-```
+ 
 
 ---
 
@@ -429,12 +429,12 @@ Validates an invite token (public endpoint).
 
 Accepts invite (for logged-in user).
 
-**Auth required:** Yes
+Auth required: Yes
 
-**Request body:** None
+Request body: None
 
-**Success response (200):**
-```json
+Success response (200):
+ 
 {
   "message": "Successfully joined team",
   "team": {
@@ -442,7 +442,7 @@ Accepts invite (for logged-in user).
     "name": "My Startup"
   }
 }
-```
+ 
 
 ---
 
@@ -452,22 +452,22 @@ Accepts invite (for logged-in user).
 
 Updates user's email (also changes where alerts are sent).
 
-**Auth required:** Yes
+Auth required: Yes
 
-**Request body:**
-```json
+Request body:
+ 
 {
   "email": "newemail@example.com"
 }
-```
+ 
 
-**Success response (200):**
-```json
+Success response (200):
+ 
 {
   "id": 1,
   "email": "newemail@example.com"
 }
-```
+ 
 
 ---
 
@@ -475,26 +475,25 @@ Updates user's email (also changes where alerts are sent).
 
 Updates user's password.
 
-**Auth required:** Yes
+Auth required: Yes
 
-**Request body:**
-```json
+Request body:
+ 
 {
   "current_password": "oldpassword123",
   "new_password": "newpassword456"
 }
-```
+ 
 
-**Success response (200):**
-```json
+Success response (200):
+ 
 {
   "message": "Password updated successfully"
 }
-```
+ 
 
-**Error response (400):**
-```json
+Error response (400):
+ 
 {
   "error": "Current password is incorrect"
 }
-```
