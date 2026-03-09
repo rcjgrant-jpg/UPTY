@@ -1,51 +1,54 @@
+import { useEffect, useState } from "react";
+import { listIncidents, resolveIncident } from "../api/incidents";
 import Sidebar from "../components/SideBar";
 
+function formatDateTime(value) {
+  if (!value) return "—";
+  return new Date(value).toLocaleString();
+}
+
 export default function IncidentsPage() {
-  // Later: fetch from Django (e.g. GET /api/incidents/)
-  const openIncidents = [
-    {
-      id: "open-1",
-      url: "staging.mysite.com",
-      subtitle: "Down since Feb 1, 2026 at 14:04",
-      duration: "Duration: 28 minutes",
-    },
-    {
-      id: "open-2",
-      url: "api.example.com/health",
-      subtitle: "Down since Feb 1, 2026 at 09:04",
-      duration: "Duration: 5 hours 28 minutes",
-    },
-  ];
+  const [incidents, setIncidents] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [resolvingId, setResolvingId] = useState(null);
 
-  const resolvedIncidents = [
-    {
-      id: "res-1",
-      url: "www.mysite.com",
-      meta: "Jan 28, 14:45 → Jan 28, 14:52 (7 min) · Resolved by alice@company.com",
-    },
-    {
-      id: "res-2",
-      url: "api.example.com/health",
-      meta: "Jan 25, 09:04 → Jan 25, 09:14 (10 min) · Resolved by john@company.com",
-    },
-    {
-      id: "res-3",
-      url: "staging.mysite.com",
-      meta: "Jan 20, 17:30 → Jan 20, 18:45 (1h 15min) · Resolved by john@company.com",
-    },
-  ];
-
-  const handleResolve = (incidentId) => {
-    console.log("Resolve incident:", incidentId);
-    // Later: POST /api/incidents/:id/resolve
+  const loadIncidents = async () => {
+    try {
+      const data = await listIncidents();
+      setIncidents(data.incidents || []);
+    } catch (err) {
+      setError(err.message || "Failed to load incidents");
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleLoadMore = () => {
-    console.log("Load more incidents");
+  useEffect(() => {
+    loadIncidents();
+  }, []);
+
+  const handleResolve = async (incidentId) => {
+    setResolvingId(incidentId);
+    setError("");
+
+    try {
+      const updated = await resolveIncident(incidentId);
+
+      setIncidents((current) =>
+        current.map((incident) =>
+          incident.id === incidentId ? updated : incident
+        )
+      );
+    } catch (err) {
+      setError(err.message || "Failed to resolve incident");
+    } finally {
+      setResolvingId(null);
+    }
   };
 
-  const openCount = openIncidents.length;
-  const resolvedCount = resolvedIncidents.length;
+  const openIncidents = incidents.filter((i) => !i.is_resolved);
+  const resolvedIncidents = incidents.filter((i) => i.is_resolved);
 
   return (
     <div className="min-h-screen bg-white">
@@ -53,88 +56,93 @@ export default function IncidentsPage() {
         <div className="grid gap-6 md:grid-cols-[240px_1fr]">
           <Sidebar />
 
-          <main className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
-            {/* Header */}
-            <h1 className="text-2xl font-semibold text-gray-900">Incidents</h1>
-            <p className="mt-1 text-sm text-gray-500">
-              {openCount} open · {resolvedCount} resolved
-            </p>
+          <main className="space-y-6">
+            <section className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
+              <h1 className="text-2xl font-semibold text-gray-900">Incidents</h1>
+              <p className="mt-1 text-sm text-gray-500">
+                Track open and resolved monitor failures.
+              </p>
 
-            {/* Open */}
-            <section className="mt-8">
-              <h2 className="text-sm font-semibold text-gray-900">Open</h2>
-
-              <div className="mt-3 space-y-3">
-                {openIncidents.map((inc) => (
-                  <div
-                    key={inc.id}
-                    className="flex flex-col gap-3 rounded-2xl border border-gray-200 bg-white p-4 sm:flex-row sm:items-center sm:justify-between"
-                  >
-                    <div className="flex items-start gap-3">
-                      <span className="mt-1 h-3 w-3 rounded-full bg-red-500" />
-                      <div>
-                        <div className="text-sm font-semibold text-gray-900">
-                          {inc.url}
-                        </div>
-                        <div className="mt-1 text-xs text-gray-500">
-                          {inc.subtitle}
-                        </div>
-                        <div className="mt-1 text-xs text-gray-400">
-                          {inc.duration}
-                        </div>
-                      </div>
-                    </div>
-
-                    <button
-                      type="button"
-                      onClick={() => handleResolve(inc.id)}
-                      className="inline-flex items-center justify-center rounded-xl bg-gray-900 px-5 py-2 text-sm font-semibold text-white hover:bg-gray-800"
-                    >
-                      Resolve
-                    </button>
-                  </div>
-                ))}
-              </div>
+              {loading && <p className="mt-4 text-sm text-gray-500">Loading incidents...</p>}
+              {error && <p className="mt-4 text-sm text-red-600">{error}</p>}
             </section>
 
-            {/* Resolved */}
-            <section className="mt-10">
-              <h2 className="text-sm font-semibold text-gray-900">Resolved</h2>
+            <IncidentSection
+              title="Open incidents"
+              incidents={openIncidents}
+              emptyText="No open incidents."
+              actionLabel="Resolve"
+              actionLoadingId={resolvingId}
+              onAction={handleResolve}
+            />
 
-              <div className="mt-3 space-y-3">
-                {resolvedIncidents.map((inc) => (
-                  <div
-                    key={inc.id}
-                    className="rounded-2xl border border-gray-200 bg-white p-4"
-                  >
-                    <div className="flex items-start gap-3">
-                      <span className="mt-1 text-green-700">✓</span>
-                      <div>
-                        <div className="text-sm font-semibold text-gray-900">
-                          {inc.url}
-                        </div>
-                        <div className="mt-1 text-xs text-gray-500">
-                          {inc.meta}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-
-              <div className="mt-6 flex justify-center">
-                <button
-                  type="button"
-                  onClick={handleLoadMore}
-                  className="text-sm text-gray-500 hover:underline"
-                >
-                  Load more ↓
-                </button>
-              </div>
-            </section>
+            <IncidentSection
+              title="Resolved incidents"
+              incidents={resolvedIncidents}
+              emptyText="No resolved incidents."
+            />
           </main>
         </div>
       </div>
     </div>
   );
 }
+
+function IncidentSection({
+  title,
+  incidents,
+  emptyText,
+  actionLabel,
+  onAction,
+  actionLoadingId,
+}) {
+  return (
+    <section className="rounded-2xl border border-gray-200 bg-white shadow-sm">
+      <div className="border-b border-gray-200 px-4 py-3">
+        <h2 className="text-sm font-semibold text-gray-900">{title}</h2>
+      </div>
+
+      {incidents.length ? (
+        <div className="divide-y divide-gray-100">
+          {incidents.map((incident) => (
+            <div
+              key={incident.id}
+              className="flex flex-col gap-4 px-4 py-4 sm:flex-row sm:items-center sm:justify-between"
+            >
+              <div>
+                <div className="text-sm font-medium text-gray-900">
+                  {incident.monitor?.url}
+                </div>
+                <div className="mt-1 text-xs text-gray-500">
+                  Started: {formatDateTime(incident.started_at)}
+                </div>
+                <div className="mt-1 text-xs text-gray-500">
+                  Resolved: {formatDateTime(incident.resolved_at)}
+                </div>
+              </div>
+
+              {onAction ? (
+                <button
+                  onClick={() => onAction(incident.id)}
+                  disabled={actionLoadingId === incident.id}
+                  className="rounded-xl bg-gray-900 px-4 py-2 text-sm font-semibold text-white hover:bg-gray-800 disabled:opacity-60"
+                >
+                  {actionLoadingId === incident.id ? "Resolving..." : actionLabel}
+                </button>
+              ) : (
+                <span className="text-xs font-medium text-gray-500">
+                  {incident.resolved_by?.email
+                    ? `Resolved by ${incident.resolved_by.email}`
+                    : "Resolved"}
+                </span>
+              )}
+            </div>
+          ))}
+        </div>
+      ) : (
+        <div className="px-4 py-6 text-sm text-gray-500">{emptyText}</div>
+      )}
+    </section>
+  );
+}
+

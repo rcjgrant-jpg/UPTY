@@ -327,7 +327,7 @@ def create_invite(request):
 
     return Response({
         'token': invite.token,
-        'url': f'/invite/{invite.token}',
+        'url': f'http://localhost:5173/invite/{invite.token}',
         'expires_at': invite.expires_at
     }, status=status.HTTP_201_CREATED)
 

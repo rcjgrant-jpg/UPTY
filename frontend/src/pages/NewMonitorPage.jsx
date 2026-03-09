@@ -1,35 +1,41 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { createMonitor } from "../api/monitors";
 import Sidebar from "../components/SideBar";
 
 export default function NewMonitorPage() {
+  const navigate = useNavigate();
+
   const [url, setUrl] = useState("");
-  const [checkEvery, setCheckEvery] = useState("60");
-  const [timeout, setTimeout] = useState("5000");
-  const [expectedStatus, setExpectedStatus] = useState("200");
-  const [failuresBeforeAlert, setFailuresBeforeAlert] = useState("3");
-  const [error, setError] = useState(null);
+  const [interval, setInterval] = useState(60);
+  const [timeout, setTimeoutValue] = useState(5000);
+  const [expectedStatus, setExpectedStatus] = useState(200);
+  const [failureThreshold, setFailureThreshold] = useState(3);
 
- 
+  const [error, setError] = useState("");
+  const [submitting, setSubmitting] = useState(false);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    setError(null);
+    setError("");
 
-    if (!url.trim()) {
-      setError("URL is required.");
-      return;
+    setSubmitting(true);
+
+    try {
+      await createMonitor({
+        url,
+        interval: Number(interval),
+        timeout: Number(timeout),
+        expected_status: Number(expectedStatus),
+        failure_threshold: Number(failureThreshold),
+      });
+
+      navigate("/dashboard");
+    } catch (err) {
+      setError(err.message || "Failed to create monitor");
+    } finally {
+      setSubmitting(false);
     }
-
-    // Later: POST to Django API
-    console.log("Create monitor:", {
-      url,
-      checkEvery: Number(checkEvery),
-      timeout: Number(timeout),
-      expectedStatus: Number(expectedStatus),
-      failuresBeforeAlert: Number(failuresBeforeAlert),
-    });
-
-    // On success → redirect to /monitors/:id
   };
 
   return (
@@ -37,96 +43,94 @@ export default function NewMonitorPage() {
       <div className="mx-auto w-full max-w-6xl px-4 py-6">
         <div className="grid gap-6 md:grid-cols-[240px_1fr]">
           <Sidebar />
+
           <main className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
-            {/* Back */}
-        
-            <h1 className="mt-3 text-xl font-semibold text-gray-900">
-              New Monitor
-            </h1>
+            <h1 className="text-2xl font-semibold text-gray-900">New Monitor</h1>
+            <p className="mt-1 text-sm text-gray-500">
+              Create a new uptime monitor for your team.
+            </p>
 
-            <div className="mt-6 max-w-xl">
-              <form
-                onSubmit={handleSubmit}
-                className="rounded-2xl border border-gray-200 bg-white p-5"
-              >
-                {/* URL */}
-                <div>
-                  <label className="block text-xs font-semibold text-gray-600">
-                    URL <span className="text-red-500">*</span>
-                  </label>
+            <form onSubmit={handleSubmit} className="mt-6 max-w-xl space-y-4">
+              <Field label="URL">
+                <input
+                  type="url"
+                  value={url}
+                  onChange={(e) => setUrl(e.target.value)}
+                  placeholder="https://example.com/health"
+                  required
+                  className="mt-2 w-full rounded-xl border border-gray-300 px-3 py-2 text-sm"
+                />
+              </Field>
 
-                  <input
-                    value={url}
-                    onChange={(e) => setUrl(e.target.value)}
-                    placeholder="https://example.com/health"
-                    className="mt-2 w-full rounded-xl border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-900/10"
-                    required
-                  />
+              <Field label="Interval (seconds)">
+                <input
+                  type="number"
+                  value={interval}
+                  onChange={(e) => setInterval(e.target.value)}
+                  min="10"
+                  required
+                  className="mt-2 w-full rounded-xl border border-gray-300 px-3 py-2 text-sm"
+                />
+              </Field>
+
+              <Field label="Timeout (ms)">
+                <input
+                  type="number"
+                  value={timeout}
+                  onChange={(e) => setTimeoutValue(e.target.value)}
+                  min="100"
+                  required
+                  className="mt-2 w-full rounded-xl border border-gray-300 px-3 py-2 text-sm"
+                />
+              </Field>
+
+              <Field label="Expected status">
+                <input
+                  type="number"
+                  value={expectedStatus}
+                  onChange={(e) => setExpectedStatus(e.target.value)}
+                  min="100"
+                  max="599"
+                  required
+                  className="mt-2 w-full rounded-xl border border-gray-300 px-3 py-2 text-sm"
+                />
+              </Field>
+
+              <Field label="Failure threshold">
+                <input
+                  type="number"
+                  value={failureThreshold}
+                  onChange={(e) => setFailureThreshold(e.target.value)}
+                  min="1"
+                  required
+                  className="mt-2 w-full rounded-xl border border-gray-300 px-3 py-2 text-sm"
+                />
+              </Field>
+
+              {error && (
+                <div className="rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+                  {error}
                 </div>
+              )}
 
-                {/* 2-col fields */}
-                <div className="mt-5 grid gap-4 sm:grid-cols-2">
-                  {/* Check every */}
-                  <FieldWithUnit
-                    label="Check every"
-                    value={checkEvery}
-                    onChange={setCheckEvery}
-                    unit="sec"
-                    inputMode="numeric"
-                  />
-
-                  {/* Timeout */}
-                  <FieldWithUnit
-                    label="Timeout"
-                    value={timeout}
-                    onChange={setTimeout}
-                    unit="ms"
-                    inputMode="numeric"
-                  />
-
-                  {/* Expected status */}
-                  <Field
-                    label="Expected status"
-                    value={expectedStatus}
-                    onChange={setExpectedStatus}
-                    inputMode="numeric"
-                  />
-
-                  {/* Failures before alert */}
-                  <Field
-                    label="Failures before alert"
-                    value={failuresBeforeAlert}
-                    onChange={setFailuresBeforeAlert}
-                    inputMode="numeric"
-                  />
-                </div>
-
-                <p className="mt-4 text-xs text-gray-500">
-                  Only URL is required. Other fields have sensible defaults.
-                </p>
-                <p className="mt-1 text-xs text-gray-500">
-                  You&#39;ll be emailed at your account address if this monitor
-                  goes down.
-                </p>
-
-                {error && (
-                  <div className="mt-4 rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
-                    {error}
-                  </div>
-                )}
-
+              <div className="flex gap-3 pt-2">
                 <button
                   type="submit"
-                  className="mt-6 w-full rounded-xl bg-gray-900 px-4 py-3 text-sm font-semibold text-white hover:bg-gray-800"
+                  disabled={submitting}
+                  className="rounded-xl bg-gray-900 px-5 py-2 text-sm font-semibold text-white hover:bg-gray-800 disabled:opacity-60"
                 >
-                  Create Monitor
+                  {submitting ? "Creating..." : "Create Monitor"}
                 </button>
 
-                <div className="mt-4 border-t border-dashed border-gray-200 pt-3 text-xs text-gray-400">
-                  On success → redirect to /monitors/:id
-                </div>
-              </form>
-            </div>
+                <button
+                  type="button"
+                  onClick={() => navigate("/dashboard")}
+                  className="rounded-xl border border-gray-300 px-5 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50"
+                >
+                  Cancel
+                </button>
+              </div>
+            </form>
           </main>
         </div>
       </div>
@@ -134,36 +138,11 @@ export default function NewMonitorPage() {
   );
 }
 
-function Field({ label, value, onChange, inputMode }) {
+function Field({ label, children }) {
   return (
     <div>
-      <label className="block text-xs font-medium text-gray-600">{label}</label>
-      <input
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        inputMode={inputMode}
-        className="mt-2 w-full rounded-xl border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-gray-900/10"
-      />
-    </div>
-  );
-}
-
-function FieldWithUnit({ label, value, onChange, unit, inputMode }) {
-  return (
-    <div>
-      <label className="block text-xs font-medium text-gray-600">{label}</label>
-
-      <div className="mt-2 flex items-stretch overflow-hidden rounded-xl border border-gray-300 bg-white">
-        <input
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
-          inputMode={inputMode}
-          className="w-full px-3 py-2 text-sm text-gray-900 focus:outline-none"
-        />
-        <div className="grid place-items-center border-l border-gray-200 px-3 text-xs font-medium text-gray-500">
-          {unit}
-        </div>
-      </div>
+      <label className="block text-sm font-medium text-gray-700">{label}</label>
+      {children}
     </div>
   );
 }

@@ -1,8 +1,12 @@
 import { useState } from "react";
+import { useAuth } from "../auth/AuthContext";
+import { updateEmail, updatePassword } from "../api/settings";
 import Sidebar from "../components/SideBar";
 
 export default function SettingsPage() {
-  const [email, setEmail] = useState("john@company.com");
+  const { user, setUser } = useAuth();
+
+  const [email, setEmail] = useState(user?.email || "");
   const [emailMsg, setEmailMsg] = useState(null);
 
   const [currentPassword, setCurrentPassword] = useState("");
@@ -10,7 +14,7 @@ export default function SettingsPage() {
   const [confirmNewPassword, setConfirmNewPassword] = useState("");
   const [pwMsg, setPwMsg] = useState(null);
 
-  const handleUpdateEmail = (e) => {
+  const handleUpdateEmail = async (e) => {
     e.preventDefault();
     setEmailMsg(null);
 
@@ -19,12 +23,16 @@ export default function SettingsPage() {
       return;
     }
 
-    console.log("Update email:", email);
-    // Later: PATCH /api/me/ or /api/settings/email
-    setEmailMsg({ type: "ok", text: "Email updated (demo)." });
+    try {
+      const updatedUser = await updateEmail(email);
+      setUser((prev) => ({ ...prev, email: updatedUser.email }));
+      setEmailMsg({ type: "ok", text: "Email updated successfully." });
+    } catch (err) {
+      setEmailMsg({ type: "error", text: err.message || "Failed to update email." });
+    }
   };
 
-  const handleChangePassword = (e) => {
+  const handleChangePassword = async (e) => {
     e.preventDefault();
     setPwMsg(null);
 
@@ -38,13 +46,15 @@ export default function SettingsPage() {
       return;
     }
 
-    console.log("Change password:", { currentPassword, newPassword });
-    // Later: POST /api/change-password (or similar)
-
-    setPwMsg({ type: "ok", text: "Password changed (demo)." });
-    setCurrentPassword("");
-    setNewPassword("");
-    setConfirmNewPassword("");
+    try {
+      await updatePassword(currentPassword, newPassword);
+      setPwMsg({ type: "ok", text: "Password changed successfully." });
+      setCurrentPassword("");
+      setNewPassword("");
+      setConfirmNewPassword("");
+    } catch (err) {
+      setPwMsg({ type: "error", text: err.message || "Failed to change password." });
+    }
   };
 
   return (
@@ -56,7 +66,6 @@ export default function SettingsPage() {
           <main className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
             <h1 className="text-2xl font-semibold text-gray-900">Settings</h1>
 
-            {/* Update Email */}
             <section className="mt-6 rounded-2xl border border-gray-200 bg-white p-5">
               <form onSubmit={handleUpdateEmail} className="max-w-lg">
                 <label className="block text-xs font-semibold text-gray-600">
@@ -87,7 +96,6 @@ export default function SettingsPage() {
               </form>
             </section>
 
-            {/* Change Password */}
             <section className="mt-6 rounded-2xl border border-gray-200 bg-white p-5">
               <form onSubmit={handleChangePassword} className="max-w-lg">
                 <h2 className="text-sm font-semibold text-gray-900">
@@ -107,14 +115,14 @@ export default function SettingsPage() {
                     type="password"
                     value={newPassword}
                     onChange={setNewPassword}
-                    placeholder=""
+                    placeholder="••••••••"
                   />
                   <Field
                     label="Confirm new password"
                     type="password"
                     value={confirmNewPassword}
                     onChange={setConfirmNewPassword}
-                    placeholder=""
+                    placeholder="••••••••"
                   />
                 </div>
 

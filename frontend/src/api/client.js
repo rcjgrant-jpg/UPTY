@@ -1,4 +1,4 @@
- const API_BASE = import.meta.env.VITE_API_URL;
+const API_BASE = import.meta.env.VITE_API_URL || "http://127.0.0.1:8000/api";
 
 function getCookie(name) {
   const value = `; ${document.cookie}`;
@@ -33,6 +33,7 @@ export async function apiFetch(path, options = {}) {
 
   let data = null;
   const contentType = response.headers.get("content-type") || "";
+
   if (contentType.includes("application/json")) {
     data = await response.json();
   }
