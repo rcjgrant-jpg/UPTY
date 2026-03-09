@@ -3,7 +3,7 @@ import { useAuth } from "../auth/AuthContext";
 
 export default function Sidebar() {
   const navigate = useNavigate();
-  const { logout, user } = useAuth();
+  const { logout, user, setUser } = useAuth();
 
   const navItems = [
     { to: "/dashboard", label: "Dashboard" },
@@ -32,13 +32,15 @@ export default function Sidebar() {
   );
 
   const handleLogout = async () => {
-    try {
-      await logout();
-      navigate("/login", { replace: true });
-    } catch {
-      navigate("/login", { replace: true });
-    }
-  };
+  try {
+    await logout();
+  } catch (err) {
+    console.error("Logout failed:", err);
+    setUser(null);
+  } finally {
+    navigate("/login", { replace: true });
+  }
+};
 
   return (
     <aside className="flex h-full flex-col rounded-2xl border border-gray-200 bg-white p-4 shadow-sm">

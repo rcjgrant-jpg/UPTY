@@ -44,9 +44,12 @@ export function AuthProvider({ children }) {
   };
 
   const logout = async () => {
-    await getCsrfCookie();
-    await logoutRequest();
-    setUser(null);
+    try {
+      await getCsrfCookie();
+      await logoutRequest();
+    } finally {
+      setUser(null);
+    }
   };
 
   const value = useMemo(
