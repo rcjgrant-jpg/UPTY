@@ -36,9 +36,13 @@ export default function LoginPage() {
     }
   };
 
+  // if (!authLoading && isAuthenticated) {
+  // return <Navigate to="/dashboard" replace />;
+  // }
+
   if (!authLoading && isAuthenticated) {
-  return <Navigate to="/dashboard" replace />;
-  }
+  return <Navigate to={redirectTo} replace />;
+}
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-slate-50 px-4">
@@ -95,7 +99,13 @@ export default function LoginPage() {
 
         <p className="mt-6 text-center text-sm">
           No account?{" "}
-          <Link to="/register" className="font-semibold hover:underline">
+          {/* <Link to="/register" className="font-semibold hover:underline">
+            Register
+          </Link> */}
+          <Link
+            to={inviteToken ? `/register?invite=${inviteToken}` : "/register"}
+            className="font-semibold hover:underline"
+          >
             Register
           </Link>
         </p>

@@ -5,7 +5,7 @@ from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from django.contrib.auth import authenticate, login, logout
 from django.views.decorators.csrf import ensure_csrf_cookie
-from .models import User, Team, TeamMember, Monitor, MonitorResult, Incident
+from .models import User, Team, TeamMember, Monitor, MonitorResult, Incident, Invite
 from .serializers import (
     UserSerializer, TeamSerializer, MonitorSerializer,
     MonitorResultSerializer, IncidentSerializer
@@ -13,46 +13,132 @@ from .serializers import (
 
 # AUTH VIEWS
 
+# @api_view(['POST'])
+# @permission_classes([AllowAny])  # Anyone can register (no login required)
+# def register(request):
+#     """
+#     Create a new user and team.
+    
+#     Expected JSON:
+#     {
+#         "email": "user@example.com",
+#         "password": "securepassword",
+#         "team_name": "My Startup"
+#     }
+#     """
+#     email = request.data.get('email')
+#     password = request.data.get('password')
+#     team_name = request.data.get('team_name')
+    
+#     # Check if email already exists
+#     if User.objects.filter(email=email).exists():
+#         return Response(
+#             {'error': 'Email already exists'}, 
+#             status=status.HTTP_400_BAD_REQUEST
+#         )
+    
+#     # Create user (username = email for simplicity)
+#     user = User.objects.create_user(
+#         username=email,
+#         email=email,
+#         password=password
+#     )
+    
+#     # Create team
+#     team = Team.objects.create(name=team_name)
+    
+#     # Add user to team
+#     TeamMember.objects.create(team=team, user=user)
+    
+#     # Log the user in
+#     login(request, user)
+    
+#     return Response({
+#         'id': user.id,
+#         'email': user.email,
+#         'team': {
+#             'id': team.id,
+#             'name': team.name
+#         }
+#     }, status=status.HTTP_201_CREATED)
+
 @api_view(['POST'])
-@permission_classes([AllowAny])  # Anyone can register (no login required)
+@permission_classes([AllowAny])
 def register(request):
     """
-    Create a new user and team.
-    
-    Expected JSON:
+    Create a new user.
+
+    Normal registration:
     {
         "email": "user@example.com",
         "password": "securepassword",
         "team_name": "My Startup"
     }
+
+    Invite registration:
+    {
+        "email": "user@example.com",
+        "password": "securepassword",
+        "invite_token": "abc123..."
+    }
     """
     email = request.data.get('email')
     password = request.data.get('password')
     team_name = request.data.get('team_name')
-    
-    # Check if email already exists
-    if User.objects.filter(email=email).exists():
+    invite_token = request.data.get('invite_token')
+
+    if not email or not password:
         return Response(
-            {'error': 'Email already exists'}, 
+            {'error': 'Email and password are required'},
             status=status.HTTP_400_BAD_REQUEST
         )
-    
-    # Create user (username = email for simplicity)
+
+    if User.objects.filter(email=email).exists():
+        return Response(
+            {'error': 'Email already exists'},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+
+    invite = None
+    if invite_token:
+        try:
+            invite = Invite.objects.get(token=invite_token)
+        except Invite.DoesNotExist:
+            return Response(
+                {'error': 'Invite not found'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        if not invite.is_valid:
+            return Response(
+                {'error': 'Invite expired or already used'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+    else:
+        if not team_name:
+            return Response(
+                {'error': 'Team name is required'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
     user = User.objects.create_user(
         username=email,
         email=email,
         password=password
     )
-    
-    # Create team
-    team = Team.objects.create(name=team_name)
-    
-    # Add user to team
-    TeamMember.objects.create(team=team, user=user)
-    
-    # Log the user in
+
+    if invite:
+        team = invite.team
+        TeamMember.objects.create(team=team, user=user)
+
+        invite.accepted = True
+        invite.save()
+    else:
+        team = Team.objects.create(name=team_name)
+        TeamMember.objects.create(team=team, user=user)
+
     login(request, user)
-    
+
     return Response({
         'id': user.id,
         'email': user.email,
@@ -61,7 +147,45 @@ def register(request):
             'name': team.name
         }
     }, status=status.HTTP_201_CREATED)
+    
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def accept_invite(request, token):
+    try:
+        invite = Invite.objects.get(token=token)
+    except Invite.DoesNotExist:
+        return Response({
+            'error': 'Invite not found'
+        }, status=status.HTTP_400_BAD_REQUEST)
 
+    # If the user is already in the invited team, treat it as success
+    if TeamMember.objects.filter(team=invite.team, user=request.user).exists():
+        return Response({
+            'message': 'Already a member of this team',
+            'team': {
+                'id': invite.team.id,
+                'name': invite.team.name
+            }
+        }, status=status.HTTP_200_OK)
+
+    if not invite.is_valid:
+        return Response({
+            'error': 'Invite expired or already used'
+        }, status=status.HTTP_400_BAD_REQUEST)
+
+    TeamMember.objects.filter(user=request.user).delete()
+    TeamMember.objects.create(team=invite.team, user=request.user)
+
+    invite.accepted = True
+    invite.save()
+
+    return Response({
+        'message': 'Successfully joined team',
+        'team': {
+            'id': invite.team.id,
+            'name': invite.team.name
+        }
+    }, status=status.HTTP_200_OK)
 
 @api_view(['POST'])
 @permission_classes([AllowAny])  # Anyone can try to login

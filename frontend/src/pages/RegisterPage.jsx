@@ -28,15 +28,25 @@ export default function RegisterPage() {
 
     setSubmitting(true);
 
-    try {
-      await register(email, password, teamName);
-      navigate(inviteToken ? `/invite/${inviteToken}` : "/dashboard", { replace: true });
-    } catch (err) {
-      setError(err.message || "Registration failed");
-    } finally {
-      setSubmitting(false);
-    }
-  };
+  //   try {
+  //     await register(email, password, teamName, inviteToken);
+  //     navigate(inviteToken ? `/invite/${inviteToken}` : "/dashboard", { replace: true });
+  //   } catch (err) {
+  //     setError(err.message || "Registration failed");
+  //   } finally {
+  //     setSubmitting(false);
+  //   }
+  // };
+
+       try {
+          await register(email, password, teamName, inviteToken);
+          navigate(inviteToken ? "/team" : "/dashboard", { replace: true });
+       } catch (err) {
+          setError(err.message || "Registration failed");
+       } finally {
+          setSubmitting(false);
+       }
+      };
 
   return (
     <div className="min-h-screen bg-white px-4 py-10">
@@ -97,16 +107,16 @@ export default function RegisterPage() {
                 required
               />
             </div>
-
+          {!inviteToken && (
             <div>
               <div className="flex items-baseline justify-between">
                 <label className="block text-sm font-medium text-gray-700">
                   Team name
                 </label>
 
-                <span className="text-xs italic text-gray-400">
+                {/* <span className="text-xs italic text-gray-400">
                   (hidden when joining via invite)
-                </span>
+                </span> */}
               </div>
 
               <input
@@ -118,7 +128,7 @@ export default function RegisterPage() {
                 required
               />
             </div>
-
+          )}
             {error && (
               <div className="rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
                 {error}
@@ -136,7 +146,7 @@ export default function RegisterPage() {
             <p className="text-center text-sm text-gray-500">
               Already have an account?{" "}
               <Link
-                to="/login"
+                to={inviteToken ? `/login?invite=${inviteToken}` : "/login"}
                 className="font-medium text-gray-900 hover:underline"
               >
                 Sign in
