@@ -1,4 +1,12 @@
+import time
 import httpx
+from django.utils import timezone
+from .models import Monitor, MonitorResult, Incident, NotificationLog
+from django.conf import settings
+
+import time
+import httpx
+from django.conf import settings
 from django.utils import timezone
 from .models import Monitor, MonitorResult, Incident, NotificationLog
 
@@ -6,73 +14,84 @@ from .models import Monitor, MonitorResult, Incident, NotificationLog
 def check_monitor(monitor):
     """
     Check a single monitor and record the result.
-    Returns True if UP, False if DOWN.
+    Returns (is_up, status_code, latency_ms).
     """
+    started = time.perf_counter()
+
     try:
-        # Make HTTP request
-        with httpx.Client(timeout=monitor.timeout / 1000) as client:
-            start_time = timezone.now()
+        with httpx.Client(
+            timeout=monitor.timeout / 1000.0,
+            follow_redirects=True,
+            trust_env=False,
+            verify=getattr(settings, "MONITOR_VERIFY_SSL", True),
+        ) as client:
             response = client.get(monitor.url)
-            end_time = timezone.now()
-            
-            # Calculate latency in milliseconds
-            latency_ms = int((end_time - start_time).total_seconds() * 1000)
-            
-            # Check if status matches expected
-            is_up = response.status_code == monitor.expected_status
-            
-            # Record result
-            MonitorResult.objects.create(
-                monitor=monitor,
-                status_code=response.status_code,
-                latency_ms=latency_ms,
-                error_message=None if is_up else f"Expected {monitor.expected_status}, got {response.status_code}"
-            )
-            
-            return is_up, response.status_code, latency_ms
-            
-    except Exception as e:
-        # Request failed (timeout, connection error, etc.)
+
+        latency_ms = int((time.perf_counter() - started) * 1000)
+        is_up = response.status_code == monitor.expected_status
+
+        MonitorResult.objects.create(
+            monitor=monitor,
+            status_code=response.status_code,
+            latency_ms=latency_ms,
+            error_message=None if is_up else f"Expected {monitor.expected_status}, got {response.status_code}",
+        )
+
+        return is_up, response.status_code, latency_ms
+
+    except httpx.RequestError as e:
+        latency_ms = int((time.perf_counter() - started) * 1000)
+
         MonitorResult.objects.create(
             monitor=monitor,
             status_code=None,
-            latency_ms=None,
-            error_message=str(e)
+            latency_ms=latency_ms,
+            error_message=f"{e.__class__.__name__}: {e}",
         )
-        return False, None, None
+
+        return False, None, latency_ms
+
+    except Exception as e:
+        latency_ms = int((time.perf_counter() - started) * 1000)
+
+        MonitorResult.objects.create(
+            monitor=monitor,
+            status_code=None,
+            latency_ms=latency_ms,
+            error_message=f"{e.__class__.__name__}: {e}",
+        )
+
+        return False, None, latency_ms
 
 
 def process_monitor_result(monitor, is_up):
     """
     Update monitor state and create incident if needed.
     """
+    monitor.last_checked_at = timezone.now()
+
     if is_up:
-        # Monitor is UP
-        monitor.current_state = 'UP'
-        monitor.last_checked_at = timezone.now()
+        monitor.current_state = "UP"
         monitor.save()
+        return
+
+    recent_results = monitor.results.order_by("-checked_at")[:monitor.failure_threshold]
+    consecutive_failures = sum(
+        1 for r in recent_results
+        if r.status_code != monitor.expected_status or r.status_code is None
+    )
+
+    if consecutive_failures >= monitor.failure_threshold:
+        was_up = monitor.current_state == "UP"
+        monitor.current_state = "DOWN"
+        monitor.save()
+
+        if was_up:
+            create_incident(monitor)
     else:
-        # Monitor is DOWN - check if we need to create incident
-        monitor.last_checked_at = timezone.now()
-        
-        # Count recent consecutive failures
-        recent_results = monitor.results.order_by('-checked_at')[:monitor.failure_threshold]
-        consecutive_failures = sum(
-            1 for r in recent_results 
-            if r.status_code != monitor.expected_status or r.status_code is None
-        )
-        
-        if consecutive_failures >= monitor.failure_threshold:
-            # Change state to DOWN
-            was_up = monitor.current_state == 'UP'
-            monitor.current_state = 'DOWN'
-            monitor.save()
-            
-            # Create incident if this is a new outage
-            if was_up:
-                create_incident(monitor)
-        else:
-            monitor.save()
+        monitor.current_state = "UP"
+        monitor.save()
+
 
 
 def create_incident(monitor):
