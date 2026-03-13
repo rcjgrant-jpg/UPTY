@@ -33,7 +33,7 @@ export default function MonitorDetailPage() {
 
   useEffect(() => {
     loadMonitor();
-    const interval = setInterval(loadMonitor, 30000);
+    const interval = setInterval(loadMonitor, 5000);
     return () => clearInterval(interval);
   }, [id]);
 

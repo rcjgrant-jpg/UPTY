@@ -32,7 +32,7 @@ export default function IncidentsPage() {
 
   useEffect(() => {
     loadIncidents();
-    const interval = setInterval(loadIncidents, 30000);
+    const interval = setInterval(loadIncidents, 5000);
     return () => clearInterval(interval);
   }, []);
 
