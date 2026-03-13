@@ -1,18 +1,18 @@
 import { NavLink, useNavigate } from "react-router-dom";
 import { useAuth } from "../auth/AuthContext";
 
-export default function Sidebar() {
+export default function Sidebar({ openIncidentCount = 0 }) {
   const navigate = useNavigate();
   const { logout, user, setUser } = useAuth();
 
   const navItems = [
     { to: "/dashboard", label: "Dashboard" },
-    { to: "/incidents", label: "Incidents" },
+    { to: "/incidents", label: "Incidents", badge: openIncidentCount },
     { to: "/team", label: "Team" },
   ];
 
   const baseItem =
-    "flex w-full items-center gap-3 px-3 py-2 text-sm transition";
+    "flex w-full items-center justify-between gap-3 px-3 py-2 text-sm transition";
 
   const itemClass = ({ isActive }) =>
     [
@@ -32,15 +32,15 @@ export default function Sidebar() {
   );
 
   const handleLogout = async () => {
-  try {
-    await logout();
-  } catch (err) {
-    console.error("Logout failed:", err);
-    setUser(null);
-  } finally {
-    navigate("/login", { replace: true });
-  }
-};
+    try {
+      await logout();
+    } catch (err) {
+      console.error("Logout failed:", err);
+      setUser(null);
+    } finally {
+      navigate("/login", { replace: true });
+    }
+  };
 
   return (
     <aside className="flex h-full flex-col rounded-2xl border border-gray-200 bg-white p-4 shadow-sm">
@@ -65,8 +65,16 @@ export default function Sidebar() {
             <NavLink to={item.to} end className={itemClass}>
               {({ isActive }) => (
                 <>
-                  <Icon isActive={isActive} />
-                  <span>{item.label}</span>
+                  <div className="flex items-center gap-3">
+                    <Icon isActive={isActive} />
+                    <span>{item.label}</span>
+                  </div>
+
+                  {item.badge > 0 && (
+                    <span className="inline-flex min-w-6 items-center justify-center rounded-full bg-red-100 px-2 py-0.5 text-xs font-semibold text-red-700">
+                      {item.badge}
+                    </span>
+                  )}
                 </>
               )}
             </NavLink>
@@ -79,8 +87,10 @@ export default function Sidebar() {
           <NavLink to="/settings" end className={itemClass}>
             {({ isActive }) => (
               <>
-                <Icon isActive={isActive} />
-                <span>Settings</span>
+                <div className="flex items-center gap-3">
+                  <Icon isActive={isActive} />
+                  <span>Settings</span>
+                </div>
               </>
             )}
           </NavLink>

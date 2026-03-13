@@ -2,9 +2,11 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { createMonitor } from "../api/monitors";
 import Sidebar from "../components/SideBar";
+import useOpenIncidentCount from "../hooks/useOpenIncidentCount";
 
 export default function NewMonitorPage() {
   const navigate = useNavigate();
+  const openIncidentCount = useOpenIncidentCount();
 
   const [url, setUrl] = useState("");
   const [interval, setInterval] = useState(60);
@@ -18,7 +20,6 @@ export default function NewMonitorPage() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
-
     setSubmitting(true);
 
     try {
@@ -42,7 +43,7 @@ export default function NewMonitorPage() {
     <div className="min-h-screen bg-white">
       <div className="mx-auto w-full max-w-6xl px-4 py-6">
         <div className="grid gap-6 md:grid-cols-[240px_1fr]">
-          <Sidebar />
+          <Sidebar openIncidentCount={openIncidentCount} />
 
           <main className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
             <h1 className="text-2xl font-semibold text-gray-900">New Monitor</h1>

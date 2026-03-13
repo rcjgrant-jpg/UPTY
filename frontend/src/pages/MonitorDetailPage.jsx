@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { deleteMonitor, getMonitor } from "../api/monitors";
 import Sidebar from "../components/SideBar";
+import useOpenIncidentCount from "../hooks/useOpenIncidentCount";
 
 function formatDateTime(value) {
   if (!value) return "Never";
@@ -11,25 +12,29 @@ function formatDateTime(value) {
 export default function MonitorDetailPage() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const openIncidentCount = useOpenIncidentCount();
 
   const [monitor, setMonitor] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [deleting, setDeleting] = useState(false);
 
-  useEffect(() => {
-    const loadMonitor = async () => {
-      try {
-        const data = await getMonitor(id);
-        setMonitor(data);
-      } catch (err) {
-        setError(err.message || "Failed to load monitor");
-      } finally {
-        setLoading(false);
-      }
-    };
+  const loadMonitor = async () => {
+    try {
+      setError("");
+      const data = await getMonitor(id);
+      setMonitor(data);
+    } catch (err) {
+      setError(err.message || "Failed to load monitor");
+    } finally {
+      setLoading(false);
+    }
+  };
 
+  useEffect(() => {
     loadMonitor();
+    const interval = setInterval(loadMonitor, 30000);
+    return () => clearInterval(interval);
   }, [id]);
 
   const handleDelete = async () => {
@@ -37,6 +42,7 @@ export default function MonitorDetailPage() {
     if (!confirmed) return;
 
     setDeleting(true);
+    setError("");
 
     try {
       await deleteMonitor(id);
@@ -51,7 +57,7 @@ export default function MonitorDetailPage() {
     <div className="min-h-screen bg-white">
       <div className="mx-auto w-full max-w-6xl px-4 py-6">
         <div className="grid gap-6 md:grid-cols-[240px_1fr]">
-          <Sidebar />
+          <Sidebar openIncidentCount={openIncidentCount} />
 
           <main className="space-y-6">
             {loading ? (
@@ -67,9 +73,18 @@ export default function MonitorDetailPage() {
                 <section className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
                   <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                     <div>
+                      <button
+                        type="button"
+                        onClick={() => navigate("/dashboard")}
+                        className="mb-3 text-sm font-medium text-gray-500 hover:text-gray-700"
+                      >
+                        ← Back to dashboard
+                      </button>
+
                       <h1 className="break-all text-2xl font-semibold text-gray-900">
                         {monitor.url}
                       </h1>
+
                       <p className="mt-2 text-sm text-gray-500">
                         Created: {formatDateTime(monitor.created_at)}
                       </p>
@@ -100,8 +115,14 @@ export default function MonitorDetailPage() {
                   <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
                     <InfoCard label="Interval" value={`${monitor.interval}s`} />
                     <InfoCard label="Timeout" value={`${monitor.timeout}ms`} />
-                    <InfoCard label="Expected status" value={String(monitor.expected_status)} />
-                    <InfoCard label="Failure threshold" value={String(monitor.failure_threshold)} />
+                    <InfoCard
+                      label="Expected status"
+                      value={String(monitor.expected_status)}
+                    />
+                    <InfoCard
+                      label="Failure threshold"
+                      value={String(monitor.failure_threshold)}
+                    />
                   </div>
 
                   <div className="mt-4">
@@ -120,41 +141,43 @@ export default function MonitorDetailPage() {
                   </div>
 
                   {monitor.recent_results?.length ? (
-                    <div className="divide-y divide-gray-100">
-                      {monitor.recent_results.map((result) => (
-                        <div
-                          key={result.id}
-                          className="grid grid-cols-1 gap-2 px-4 py-3 text-sm sm:grid-cols-4"
-                        >
-                          <div>
-                            <div className="text-xs text-gray-500">Checked</div>
-                            <div className="text-gray-900">
-                              {formatDateTime(result.checked_at)}
+                    <div className="max-h-[420px] overflow-y-auto">
+                      <div className="divide-y divide-gray-100">
+                        {monitor.recent_results.map((result) => (
+                          <div
+                            key={result.id}
+                            className="grid grid-cols-1 gap-2 px-4 py-3 text-sm sm:grid-cols-4"
+                          >
+                            <div>
+                              <div className="text-xs text-gray-500">Checked</div>
+                              <div className="text-gray-900">
+                                {formatDateTime(result.checked_at)}
+                              </div>
                             </div>
-                          </div>
 
-                          <div>
-                            <div className="text-xs text-gray-500">Status code</div>
-                            <div className="text-gray-900">
-                              {result.status_code ?? "—"}
+                            <div>
+                              <div className="text-xs text-gray-500">Status code</div>
+                              <div className="text-gray-900">
+                                {result.status_code ?? "—"}
+                              </div>
                             </div>
-                          </div>
 
-                          <div>
-                            <div className="text-xs text-gray-500">Latency</div>
-                            <div className="text-gray-900">
-                              {result.latency_ms != null ? `${result.latency_ms}ms` : "—"}
+                            <div>
+                              <div className="text-xs text-gray-500">Latency</div>
+                              <div className="text-gray-900">
+                                {result.latency_ms != null ? `${result.latency_ms}ms` : "—"}
+                              </div>
                             </div>
-                          </div>
 
-                          <div>
-                            <div className="text-xs text-gray-500">Error</div>
-                            <div className="text-gray-900">
-                              {result.error_message || "—"}
+                            <div>
+                              <div className="text-xs text-gray-500">Error</div>
+                              <div className={result.error_message ? "text-red-600 break-words" : "text-gray-900"}>
+                                {result.error_message || "—"}
+                              </div>
                             </div>
                           </div>
-                        </div>
-                      ))}
+                        ))}
+                      </div>
                     </div>
                   ) : (
                     <div className="px-4 py-6 text-sm text-gray-500">
@@ -162,6 +185,7 @@ export default function MonitorDetailPage() {
                     </div>
                   )}
                 </section>
+
               </>
             )}
           </main>

@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { listMonitors } from "../api/monitors";
+import { listIncidents } from "../api/incidents";
 import Sidebar from "../components/SideBar";
 
 function formatLastChecked(value) {
@@ -22,65 +23,130 @@ function formatLastChecked(value) {
   return `${diffDays}d ago`;
 }
 
+function formatDateTime(value) {
+  if (!value) return "—";
+  return new Date(value).toLocaleString();
+}
+
 export default function DashboardPage() {
   const navigate = useNavigate();
+
   const [monitors, setMonitors] = useState([]);
+  const [incidents, setIncidents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-  useEffect(() => {
-    const loadMonitors = async () => {
-      try {
-        const data = await listMonitors();
-        setMonitors(data.monitors || []);
-      } catch (err) {
-        setError(err.message || "Failed to load monitors");
-      } finally {
-        setLoading(false);
-      }
-    };
+  const loadDashboardData = async () => {
+    try {
+      setError("");
 
-    loadMonitors();
+      const [monitorData, incidentData] = await Promise.all([
+        listMonitors(),
+        listIncidents(),
+      ]);
+
+      setMonitors(monitorData.monitors || []);
+      setIncidents(incidentData.incidents || []);
+    } catch (err) {
+      setError(err.message || "Failed to load dashboard");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadDashboardData();
+
+    const interval = setInterval(loadDashboardData, 30000);
+    return () => clearInterval(interval);
   }, []);
 
-  const counts = useMemo(() => {
+  const stats = useMemo(() => {
     const up = monitors.filter((m) => m.current_state === "UP").length;
     const down = monitors.filter((m) => m.current_state === "DOWN").length;
-    return { total: monitors.length, up, down };
-  }, [monitors]);
-
-  const handleMonitorClick = (monitorId) => {
-    navigate(`/monitors/${monitorId}`);
-  };
-
-  const handleNewMonitor = () => {
-    navigate("/monitors/new");
-  };
+    const openIncidents = incidents.filter((i) => !i.is_resolved);
+    return {
+      total: monitors.length,
+      up,
+      down,
+      openIncidentCount: openIncidents.length,
+      openIncidents,
+    };
+  }, [monitors, incidents]);
 
   return (
     <div className="min-h-screen bg-white">
       <div className="mx-auto w-full max-w-6xl px-4 py-6">
         <div className="grid gap-6 md:grid-cols-[240px_1fr]">
-          <Sidebar />
+          <Sidebar openIncidentCount={stats.openIncidentCount} />
 
-          <main className="space-y-4">
+          <main className="space-y-6">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
               <div>
-                <h1 className="text-2xl font-semibold text-gray-900">
-                  Monitors
-                </h1>
+                <h1 className="text-2xl font-semibold text-gray-900">Dashboard</h1>
                 <p className="mt-1 text-sm text-gray-500">
-                  {counts.total} monitors · {counts.up} up · {counts.down} down
+                  {stats.total} monitors · {stats.up} up · {stats.down} down
                 </p>
               </div>
 
               <button
-                onClick={handleNewMonitor}
+                onClick={() => navigate("/monitors/new")}
                 className="inline-flex items-center justify-center rounded-xl bg-gray-900 px-4 py-2 text-sm font-semibold text-white hover:bg-gray-800"
               >
                 + New Monitor
               </button>
             </div>
+
+            {error && (
+              <section className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+                {error}
+              </section>
+            )}
+
+            {stats.openIncidentCount > 0 && (
+              <section className="rounded-2xl border border-red-200 bg-red-50 p-4 shadow-sm">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                  <div>
+                    <h2 className="text-sm font-semibold text-red-800">
+                      Active incident alert
+                    </h2>
+                    <p className="mt-1 text-sm text-red-700">
+                      {stats.openIncidentCount} open incident
+                      {stats.openIncidentCount === 1 ? "" : "s"} need attention.
+                    </p>
+                  </div>
+
+                  <button
+                    onClick={() => navigate("/incidents")}
+                    className="rounded-xl border border-red-300 bg-white px-4 py-2 text-sm font-semibold text-red-700 hover:bg-red-100"
+                  >
+                    View incidents
+                  </button>
+                </div>
+
+                <div className="mt-4 space-y-3">
+                  {stats.openIncidents.slice(0, 3).map((incident) => (
+                    <div
+                      key={incident.id}
+                      className="rounded-xl border border-red-100 bg-white px-4 py-3"
+                    >
+                      <div className="text-sm font-medium text-gray-900 break-all">
+                        {incident.monitor?.url}
+                      </div>
+                      <div className="mt-1 text-xs text-gray-500">
+                        Started: {formatDateTime(incident.started_at)}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </section>
+            )}
+
+            <section className="grid gap-4 sm:grid-cols-3">
+              <StatCard label="Total monitors" value={stats.total} />
+              <StatCard label="Currently up" value={stats.up} />
+              <StatCard label="Open incidents" value={stats.openIncidentCount} />
+            </section>
 
             <section className="rounded-2xl border border-gray-200 bg-white shadow-sm">
               <div className="grid grid-cols-12 gap-3 border-b border-gray-200 px-4 py-3 text-[11px] font-semibold tracking-wide text-gray-500">
@@ -92,19 +158,17 @@ export default function DashboardPage() {
 
               {loading ? (
                 <div className="px-4 py-6 text-sm text-gray-500">Loading monitors...</div>
-              ) : error ? (
-                <div className="px-4 py-6 text-sm text-red-600">{error}</div>
               ) : monitors.length > 0 ? (
                 <div className="divide-y divide-gray-100">
-                  {monitors.map((m) => (
+                  {monitors.map((monitor) => (
                     <button
-                      key={m.id}
-                      onClick={() => handleMonitorClick(m.id)}
+                      key={monitor.id}
+                      onClick={() => navigate(`/monitors/${monitor.id}`)}
                       className="grid w-full grid-cols-12 gap-3 px-4 py-3 text-left hover:bg-gray-50"
                     >
                       <div className="col-span-6">
                         <div className="break-all text-sm font-medium text-gray-900 hover:underline">
-                          {m.url}
+                          {monitor.url}
                         </div>
                       </div>
 
@@ -112,21 +176,21 @@ export default function DashboardPage() {
                         <span
                           className={[
                             "inline-flex rounded-full px-2.5 py-1 text-xs font-semibold",
-                            m.current_state === "UP"
+                            monitor.current_state === "UP"
                               ? "bg-green-100 text-green-700"
                               : "bg-red-100 text-red-700",
                           ].join(" ")}
                         >
-                          {m.current_state}
+                          {monitor.current_state}
                         </span>
                       </div>
 
                       <div className="col-span-2 flex items-center text-sm text-gray-600">
-                        {m.interval}s
+                        {monitor.interval}s
                       </div>
 
                       <div className="col-span-2 flex items-center text-sm text-gray-500">
-                        {formatLastChecked(m.last_checked_at)}
+                        {formatLastChecked(monitor.last_checked_at)}
                       </div>
                     </button>
                   ))}
@@ -135,7 +199,7 @@ export default function DashboardPage() {
                 <div className="px-4 py-10 text-center">
                   <p className="text-sm text-gray-500">No monitors yet.</p>
                   <button
-                    onClick={handleNewMonitor}
+                    onClick={() => navigate("/monitors/new")}
                     className="mt-4 inline-flex items-center justify-center rounded-xl bg-gray-900 px-4 py-2 text-sm font-semibold text-white hover:bg-gray-800"
                   >
                     Add your first monitor
@@ -146,6 +210,15 @@ export default function DashboardPage() {
           </main>
         </div>
       </div>
+    </div>
+  );
+}
+
+function StatCard({ label, value }) {
+  return (
+    <div className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm">
+      <div className="text-xs font-medium text-gray-500">{label}</div>
+      <div className="mt-1 text-2xl font-semibold text-gray-900">{value}</div>
     </div>
   );
 }

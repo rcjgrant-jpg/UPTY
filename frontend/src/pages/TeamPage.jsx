@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { createInvite, getTeam } from "../api/team";
 import Sidebar from "../components/SideBar";
+import useOpenIncidentCount from "../hooks/useOpenIncidentCount";
 
 function formatDateTime(value) {
   if (!value) return "—";
@@ -8,6 +9,8 @@ function formatDateTime(value) {
 }
 
 export default function TeamPage() {
+  const openIncidentCount = useOpenIncidentCount();
+
   const [team, setTeam] = useState(null);
   const [inviteLink, setInviteLink] = useState("");
   const [copied, setCopied] = useState(false);
@@ -63,7 +66,7 @@ export default function TeamPage() {
     <div className="min-h-screen bg-white">
       <div className="mx-auto w-full max-w-6xl px-4 py-6">
         <div className="grid gap-6 md:grid-cols-[240px_1fr]">
-          <Sidebar />
+          <Sidebar openIncidentCount={openIncidentCount} />
 
           <main className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
             {loading ? (

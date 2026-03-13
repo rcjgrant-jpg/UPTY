@@ -2,9 +2,11 @@ import { useState } from "react";
 import { useAuth } from "../auth/AuthContext";
 import { updateEmail, updatePassword } from "../api/settings";
 import Sidebar from "../components/SideBar";
+import useOpenIncidentCount from "../hooks/useOpenIncidentCount";
 
 export default function SettingsPage() {
   const { user, setUser } = useAuth();
+  const openIncidentCount = useOpenIncidentCount();
 
   const [email, setEmail] = useState(user?.email || "");
   const [emailMsg, setEmailMsg] = useState(null);
@@ -61,7 +63,7 @@ export default function SettingsPage() {
     <div className="min-h-screen bg-white">
       <div className="mx-auto w-full max-w-6xl px-4 py-6">
         <div className="grid gap-6 md:grid-cols-[240px_1fr]">
-          <Sidebar />
+          <Sidebar openIncidentCount={openIncidentCount} />
 
           <main className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
             <h1 className="text-2xl font-semibold text-gray-900">Settings</h1>
@@ -83,9 +85,7 @@ export default function SettingsPage() {
                   This is where alerts are sent for monitors you create.
                 </p>
 
-                {emailMsg && (
-                  <Message type={emailMsg.type} text={emailMsg.text} />
-                )}
+                {emailMsg && <Message type={emailMsg.type} text={emailMsg.text} />}
 
                 <button
                   type="submit"
