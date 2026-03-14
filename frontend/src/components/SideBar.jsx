@@ -15,7 +15,7 @@ export default function Sidebar({ openIncidentCount = 0 }) {
     [
       "flex w-full items-center justify-between gap-3 rounded-xl px-3 py-2 text-sm transition",
       isActive
-        ? "bg-brand-lavenderSoft font-semibold text-brand-blueDeep"
+        ? "bg-brand-lavenderSoft font-semibold text-black"
         : "text-brand-muted hover:bg-brand-cream hover:text-brand-text",
     ].join(" ");
 
@@ -23,7 +23,7 @@ export default function Sidebar({ openIncidentCount = 0 }) {
     <span
       className={[
         "h-4 w-4 rounded-md transition",
-        isActive ? "bg-brand-blue" : "bg-brand-lavender",
+        isActive ? "bg-brand-yellow" : "bg-brand-lavender",
       ].join(" ")}
     />
   );
