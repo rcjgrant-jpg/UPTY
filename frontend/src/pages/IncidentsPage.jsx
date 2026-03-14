@@ -66,7 +66,7 @@ export default function IncidentsPage() {
           <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-2 text-sm font-semibold text-red-700">
             {openIncidents.length} open
           </div>
-          <div className="rounded-xl border border-brand-border bg-brand-lavenderSoft px-4 py-2 text-sm font-semibold text-brand-text">
+          <div className="rounded-xl border border-brand-border bg-white px-4 py-2 text-sm font-semibold text-brand-text">
             {resolvedIncidents.length} resolved
           </div>
         </div>
