@@ -133,9 +133,9 @@ export default function DashboardPage() {
       )}
 
       <section className="grid gap-4 sm:grid-cols-3">
-        <StatCard label="Total monitors" value={stats.total} accent={true} />
-        <StatCard label="Currently up" value={stats.up} accent={true} />
-        <StatCard label="Open incidents" value={stats.openIncidentCount} accent={true} />
+        <StatCard label="Total monitors" value={stats.total} />
+        <StatCard label="Currently up" value={stats.up} />
+        <StatCard label="Open incidents" value={stats.openIncidentCount} />
       </section>
 
       <section className="app-card overflow-hidden p-0">
@@ -202,9 +202,9 @@ export default function DashboardPage() {
   );
 }
 
-function StatCard({ label, value, accent = false }) {
+function StatCard({ label, value}) {
   return (
-    <div className={accent ? "app-card-accent" : "app-card"}>
+    <div className={"app-metric-card"}>
       <div className="text-xs font-medium text-brand-muted">{label}</div>
       <div className="mt-1 text-2xl font-semibold text-brand-text">{value}</div>
     </div>
