@@ -1,12 +1,12 @@
 import { useState } from "react";
 import { useAuth } from "../auth/AuthContext";
 import { updateEmail, updatePassword } from "../api/settings";
-import Sidebar from "../components/SideBar";
-import useOpenIncidentCount from "../hooks/useOpenIncidentCount";
+import AppLayout from "../components/AppLayout";
+import TextField from "../components/TextField";
+import AlertMessage from "../components/AlertMessage";
 
 export default function SettingsPage() {
   const { user, setUser } = useAuth();
-  const openIncidentCount = useOpenIncidentCount();
 
   const [email, setEmail] = useState(user?.email || "");
   const [emailMsg, setEmailMsg] = useState(null);
@@ -30,7 +30,10 @@ export default function SettingsPage() {
       setUser((prev) => ({ ...prev, email: updatedUser.email }));
       setEmailMsg({ type: "ok", text: "Email updated successfully." });
     } catch (err) {
-      setEmailMsg({ type: "error", text: err.message || "Failed to update email." });
+      setEmailMsg({
+        type: "error",
+        text: err.message || "Failed to update email.",
+      });
     }
   };
 
@@ -39,7 +42,10 @@ export default function SettingsPage() {
     setPwMsg(null);
 
     if (!currentPassword || !newPassword || !confirmNewPassword) {
-      setPwMsg({ type: "error", text: "Please fill in all password fields." });
+      setPwMsg({
+        type: "error",
+        text: "Please fill in all password fields.",
+      });
       return;
     }
 
@@ -55,106 +61,86 @@ export default function SettingsPage() {
       setNewPassword("");
       setConfirmNewPassword("");
     } catch (err) {
-      setPwMsg({ type: "error", text: err.message || "Failed to change password." });
+      setPwMsg({
+        type: "error",
+        text: err.message || "Failed to change password.",
+      });
     }
   };
 
   return (
-    <div className="min-h-screen bg-white">
-      <div className="mx-auto w-full max-w-6xl px-4 py-6">
-        <div className="grid gap-6 md:grid-cols-[240px_1fr]">
-          <Sidebar openIncidentCount={openIncidentCount} />
+    <AppLayout
+      title="Settings"
+      subtitle="Manage your account details and security settings."
+    >
+    <section className="app-card">
+      <form onSubmit={handleUpdateEmail} className="max-w-lg space-y-4">
 
-          <main className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
-            <h1 className="text-2xl font-semibold text-gray-900">Settings</h1>
+        <TextField
+          label="Email"
+          type="email"
+          value={email}
+          onChange={setEmail}
+          placeholder="you@company.com"
+          required
+        />
 
-            <section className="mt-6 rounded-2xl border border-gray-200 bg-white p-5">
-              <form onSubmit={handleUpdateEmail} className="max-w-lg">
-                <label className="block text-xs font-semibold text-gray-600">
-                  Email
-                </label>
+        <p className="mt-2 text-xs text-brand-muted">
+          This is where alerts are sent for monitors you create.
+        </p>
 
-                <input
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  type="email"
-                  className="mt-2 w-full rounded-xl border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-900/10"
-                />
+        {emailMsg && (
+          <AlertMessage type={emailMsg.type} text={emailMsg.text} />
+        )}
 
-                <p className="mt-2 text-xs text-gray-500">
-                  This is where alerts are sent for monitors you create.
-                </p>
+        <button type="submit" className="app-button-primary">
+          Update Email
+        </button>
 
-                {emailMsg && <Message type={emailMsg.type} text={emailMsg.text} />}
+      </form>
+    </section>
 
-                <button
-                  type="submit"
-                  className="mt-4 inline-flex items-center justify-center rounded-xl bg-gray-900 px-5 py-2 text-sm font-semibold text-white hover:bg-gray-800"
-                >
-                  Update Email
-                </button>
-              </form>
-            </section>
+      <section className="app-card">
+        <form onSubmit={handleChangePassword} className="max-w-lg space-y-4">
 
-            <section className="mt-6 rounded-2xl border border-gray-200 bg-white p-5">
-              <form onSubmit={handleChangePassword} className="max-w-lg">
-                <h2 className="text-sm font-semibold text-gray-900">
-                  Change Password
-                </h2>
+          <TextField
+            label="Current password"
+            type="password"
+            value={currentPassword}
+            onChange={setCurrentPassword}
+            placeholder="••••••••"
+            required
+          />
 
-                <div className="mt-4 space-y-4">
-                  <Field
-                    label="Current password"
-                    type="password"
-                    value={currentPassword}
-                    onChange={setCurrentPassword}
-                    placeholder="••••••••"
-                  />
-                  <Field
-                    label="New password"
-                    type="password"
-                    value={newPassword}
-                    onChange={setNewPassword}
-                    placeholder="••••••••"
-                  />
-                  <Field
-                    label="Confirm new password"
-                    type="password"
-                    value={confirmNewPassword}
-                    onChange={setConfirmNewPassword}
-                    placeholder="••••••••"
-                  />
-                </div>
+          <TextField
+            label="New password"
+            type="password"
+            value={newPassword}
+            onChange={setNewPassword}
+            placeholder="••••••••"
+            required
+          />
 
-                {pwMsg && <Message type={pwMsg.type} text={pwMsg.text} />}
+          <TextField
+            label="Confirm new password"
+            type="password"
+            value={confirmNewPassword}
+            onChange={setConfirmNewPassword}
+            placeholder="••••••••"
+            required
+          />
 
-                <button
-                  type="submit"
-                  className="mt-6 inline-flex items-center justify-center rounded-xl bg-gray-900 px-6 py-2.5 text-sm font-semibold text-white hover:bg-gray-800"
-                >
-                  Change Password
-                </button>
-              </form>
-            </section>
-          </main>
-        </div>
-      </div>
-    </div>
-  );
-}
+          {pwMsg && (
+            <AlertMessage type={pwMsg.type} text={pwMsg.text} />
+          )}
 
-function Field({ label, type = "text", value, onChange, placeholder }) {
-  return (
-    <div>
-      <label className="block text-xs font-medium text-gray-600">{label}</label>
-      <input
-        type={type}
-        value={value}
-        placeholder={placeholder}
-        onChange={(e) => onChange(e.target.value)}
-        className="mt-2 w-full rounded-xl border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-gray-900/10"
-      />
-    </div>
+          <button type="submit" className="app-button-primary">
+            Change Password
+          </button>
+
+        </form>
+      </section>
+    </AppLayout>
   );
 }
 
@@ -165,7 +151,7 @@ function Message({ type, text }) {
       : "border-red-200 bg-red-50 text-red-700";
 
   return (
-    <div className={`mt-3 rounded-xl border px-3 py-2 text-sm ${cls}`}>
+    <div className={`rounded-xl border px-3 py-2 text-sm ${cls}`}>
       {text}
     </div>
   );

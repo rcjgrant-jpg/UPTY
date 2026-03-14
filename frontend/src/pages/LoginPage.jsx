@@ -1,14 +1,21 @@
 import { useState } from "react";
-import { Link, Navigate, useLocation, useNavigate, useSearchParams } from "react-router-dom";
+import {
+  Link,
+  Navigate,
+  useLocation,
+  useNavigate,
+  useSearchParams,
+} from "react-router-dom";
 import { useAuth } from "../auth/AuthContext";
+import AuthLayout from "../components/AuthLayout";
+import TextField from "../components/TextField";
 
 export default function LoginPage() {
   const navigate = useNavigate();
   const location = useLocation();
-
   const [searchParams] = useSearchParams();
   const inviteToken = searchParams.get("invite");
-  
+
   const { login, isAuthenticated, authLoading } = useAuth();
 
   const [email, setEmail] = useState("");
@@ -16,8 +23,7 @@ export default function LoginPage() {
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
-  const redirectTo =
-  inviteToken
+  const redirectTo = inviteToken
     ? `/invite/${inviteToken}`
     : location.state?.from?.pathname || "/dashboard";
 
@@ -36,80 +42,58 @@ export default function LoginPage() {
     }
   };
 
-  // if (!authLoading && isAuthenticated) {
-  // return <Navigate to="/dashboard" replace />;
-  // }
-
   if (!authLoading && isAuthenticated) {
-  return <Navigate to={redirectTo} replace />;
-}
+    return <Navigate to={redirectTo} replace />;
+  }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-slate-50 px-4">
-      <div className="w-full max-w-md rounded-xl border bg-white p-8 shadow-sm">
-        <h1 className="mb-6 text-center text-2xl font-bold text-gray-900">
-          Sign in to your account
-        </h1>
+    <AuthLayout
+      title="Sign in to your account"
+      subtitle="Monitor uptime, incidents, and your team in one place."
+    >
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <TextField
+          label="Email"
+          type="email"
+          value={email}
+          onChange={setEmail}
+          placeholder="you@company.com"
+          required
+        />
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label className="mb-1 block text-sm font-medium text-gray-700">
-              Email
-            </label>
+        <TextField
+          label="Password"
+          type="password"
+          value={password}
+          onChange={setPassword}
+          placeholder="••••••••"
+          required
+        />
 
-            <input
-              type="email"
-              placeholder="you@company.com"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-              className="w-full rounded-lg border px-3 py-2"
-            />
+        {error && (
+          <div className="rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+            {error}
           </div>
+        )}
 
-          <div>
-            <label className="mb-1 block text-sm font-medium text-gray-700">
-              Password
-            </label>
+        <button
+          type="submit"
+          disabled={submitting}
+          className="w-full app-button-primary disabled:cursor-not-allowed disabled:opacity-60"
+        >
+          {submitting ? "Signing In..." : "Sign In"}
+        </button>
+      </form>
 
-            <input
-              type="password"
-              placeholder="••••••••"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              className="w-full rounded-lg border px-3 py-2"
-            />
-          </div>
-
-          {error && (
-            <div className="rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
-              {error}
-            </div>
-          )}
-
-          <button
-            type="submit"
-            disabled={submitting}
-            className="w-full rounded-lg bg-slate-900 py-2 text-white hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
-          >
-            {submitting ? "Signing In..." : "Sign In"}
-          </button>
-        </form>
-
-        <p className="mt-6 text-center text-sm">
-          No account?{" "}
-          {/* <Link to="/register" className="font-semibold hover:underline">
-            Register
-          </Link> */}
-          <Link
-            to={inviteToken ? `/register?invite=${inviteToken}` : "/register"}
-            className="font-semibold hover:underline"
-          >
-            Register
-          </Link>
-        </p>
-      </div>
-    </div>
+      <p className="mt-6 text-center text-sm text-brand-muted">
+        No account?{" "}
+        <Link
+          to={inviteToken ? `/register?invite=${inviteToken}` : "/register"}
+          className="font-semibold text-brand-blueDeep hover:underline"
+        >
+          Register
+        </Link>
+      </p>
+    </AuthLayout>
   );
 }

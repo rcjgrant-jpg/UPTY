@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { createInvite, getTeam } from "../api/team";
-import Sidebar from "../components/SideBar";
-import useOpenIncidentCount from "../hooks/useOpenIncidentCount";
+import AppLayout from "../components/AppLayout";
+import AlertMessage from "../components/AlertMessage";
+import TextField from "../components/TextField";
 
 function formatDateTime(value) {
   if (!value) return "—";
@@ -9,8 +10,6 @@ function formatDateTime(value) {
 }
 
 export default function TeamPage() {
-  const openIncidentCount = useOpenIncidentCount();
-
   const [team, setTeam] = useState(null);
   const [inviteLink, setInviteLink] = useState("");
   const [copied, setCopied] = useState(false);
@@ -21,6 +20,7 @@ export default function TeamPage() {
   useEffect(() => {
     const loadTeam = async () => {
       try {
+        setError("");
         const data = await getTeam();
         setTeam(data);
       } catch (err) {
@@ -63,94 +63,95 @@ export default function TeamPage() {
   const membersCount = team?.members?.length || 0;
 
   return (
-    <div className="min-h-screen bg-white">
-      <div className="mx-auto w-full max-w-6xl px-4 py-6">
-        <div className="grid gap-6 md:grid-cols-[240px_1fr]">
-          <Sidebar openIncidentCount={openIncidentCount} />
+    <AppLayout
+      title={team?.name || "Team"}
+      subtitle={
+        loading ? "Loading team..." : `${membersCount} member${membersCount === 1 ? "" : "s"}`
+      }
+    >
+      {loading ? (
+        <section className="app-card">
+          <p className="text-sm text-brand-muted">Loading team...</p>
+        </section>
+      ) : error && !team ? (
+        <AlertMessage type="error" text={error} />
+      ) : (
+        <>
+          <section className="app-card overflow-hidden p-0">
+            <div className="border-b border-brand-border bg-brand-lavenderSoft px-4 py-3">
+              <h2 className="text-sm font-semibold text-brand-text">Team members</h2>
+            </div>
 
-          <main className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
-            {loading ? (
-              <p className="text-sm text-gray-500">Loading team...</p>
-            ) : error && !team ? (
-              <p className="text-sm text-red-600">{error}</p>
+            {team?.members?.length ? (
+              <div className="divide-y divide-brand-border">
+                {team.members.map((member) => (
+                  <MemberRow
+                    key={member.id}
+                    email={member.email}
+                    joined={formatDateTime(member.joined_at)}
+                  />
+                ))}
+              </div>
             ) : (
-              <>
-                <div>
-                  <h1 className="text-xl font-semibold leading-tight text-gray-900">
-                    {team.name}
-                  </h1>
-                  <p className="mt-1 text-sm text-gray-500">
-                    {membersCount} members
-                  </p>
-                </div>
-
-                <section className="mt-6 rounded-2xl border border-gray-200 bg-white">
-                  <div className="divide-y divide-gray-100">
-                    {team.members.map((m) => (
-                      <MemberRow
-                        key={m.id}
-                        email={m.email}
-                        joined={formatDateTime(m.joined_at)}
-                      />
-                    ))}
-                  </div>
-                </section>
-
-                <section className="mt-8">
-                  <h2 className="text-sm font-semibold text-gray-900">
-                    Invite a teammate
-                  </h2>
-
-                  <div className="mt-3 max-w-2xl rounded-2xl border border-gray-200 bg-white p-5">
-                    <button
-                      type="button"
-                      onClick={generateInviteLink}
-                      disabled={inviteLoading}
-                      className="inline-flex items-center justify-center rounded-xl bg-gray-900 px-6 py-2.5 text-sm font-semibold text-white hover:bg-gray-800 disabled:opacity-60"
-                    >
-                      {inviteLoading ? "Generating..." : "Generate Invite Link"}
-                    </button>
-
-                    <div className="mt-6 text-xs text-gray-500">Invite link</div>
-
-                    <div className="mt-2 flex flex-col gap-3 sm:flex-row sm:items-center">
-                      <input
-                        value={inviteLink}
-                        readOnly
-                        placeholder="Generate a link to invite a teammate"
-                        className="w-full rounded-xl border border-gray-300 bg-white px-3 py-2 text-sm text-gray-700 placeholder:text-gray-400 focus:outline-none"
-                      />
-
-                      <button
-                        type="button"
-                        onClick={handleCopy}
-                        disabled={!inviteLink}
-                        className={[
-                          "inline-flex items-center justify-center rounded-xl px-5 py-2 text-sm font-semibold",
-                          inviteLink
-                            ? "bg-gray-900 text-white hover:bg-gray-800"
-                            : "cursor-not-allowed bg-gray-200 text-gray-500",
-                        ].join(" ")}
-                      >
-                        {copied ? "Copied" : "Copy"}
-                      </button>
-                    </div>
-
-                    <div className="mt-2 text-xs text-gray-400">Expires in 7 days</div>
-
-                    {error && (
-                      <div className="mt-4 rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
-                        {error}
-                      </div>
-                    )}
-                  </div>
-                </section>
-              </>
+              <div className="px-4 py-6 text-sm text-brand-muted">
+                No team members found.
+              </div>
             )}
-          </main>
-        </div>
-      </div>
-    </div>
+          </section>
+
+          <section className="app-card">
+            <div>
+              <h2 className="text-sm font-semibold text-brand-text">
+                Invite a teammate
+              </h2>
+              <p className="mt-1 text-sm text-brand-muted">
+                Generate a shareable invite link for a new team member.
+              </p>
+            </div>
+
+            <div className="mt-5 max-w-2xl space-y-4">
+              <button
+                type="button"
+                onClick={generateInviteLink}
+                disabled={inviteLoading}
+                className="app-button-primary disabled:opacity-60"
+              >
+                {inviteLoading ? "Generating..." : "Generate Invite Link"}
+              </button>
+
+              <div>
+                <TextField
+                  label="Invite link"
+                  value={inviteLink}
+                  onChange={() => {}}
+                  placeholder="Generate a link to invite a teammate"
+                  readOnly
+                />
+              </div>
+
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+                <button
+                  type="button"
+                  onClick={handleCopy}
+                  disabled={!inviteLink}
+                  className={
+                    inviteLink
+                      ? "app-button-outline"
+                      : "inline-flex items-center justify-center rounded-lg border border-brand-border bg-gray-100 px-4 py-2 font-medium text-brand-muted opacity-60"
+                  }
+                >
+                  {copied ? "Copied" : "Copy"}
+                </button>
+
+                <span className="text-xs text-brand-muted">Expires in 7 days</span>
+              </div>
+
+              {error && <AlertMessage type="error" text={error} />}
+            </div>
+          </section>
+        </>
+      )}
+    </AppLayout>
   );
 }
 
@@ -165,13 +166,13 @@ function MemberRow({ email, joined }) {
 
   return (
     <div className="flex items-center gap-4 px-5 py-4">
-      <div className="grid h-10 w-10 place-items-center rounded-full bg-gray-100 text-xs font-semibold text-gray-600">
+      <div className="grid h-10 w-10 place-items-center rounded-full bg-brand-yellowSoft text-xs font-semibold text-brand-text">
         {initials}
       </div>
 
       <div>
-        <div className="text-sm font-medium text-gray-900">{email}</div>
-        <div className="mt-0.5 text-xs text-gray-500">Joined {joined}</div>
+        <div className="text-sm font-medium text-brand-text">{email}</div>
+        <div className="mt-0.5 text-xs text-brand-muted">Joined {joined}</div>
       </div>
     </div>
   );

@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { listIncidents, resolveIncident } from "../api/incidents";
-import Sidebar from "../components/SideBar";
-import useOpenIncidentCount from "../hooks/useOpenIncidentCount";
+import AppLayout from "../components/AppLayout";
+import AlertMessage from "../components/AlertMessage";
 
 function formatDateTime(value) {
   if (!value) return "—";
@@ -11,7 +11,6 @@ function formatDateTime(value) {
 
 export default function IncidentsPage() {
   const navigate = useNavigate();
-  const openIncidentCount = useOpenIncidentCount();
 
   const [incidents, setIncidents] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -59,62 +58,47 @@ export default function IncidentsPage() {
   const resolvedIncidents = incidents.filter((incident) => incident.is_resolved);
 
   return (
-    <div className="min-h-screen bg-white">
-      <div className="mx-auto w-full max-w-6xl px-4 py-6">
-        <div className="grid gap-6 md:grid-cols-[240px_1fr]">
-          <Sidebar openIncidentCount={openIncidentCount} />
-
-          <main className="space-y-6">
-            <section className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
-              <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-                <div>
-                  <h1 className="text-2xl font-semibold text-gray-900">Incidents</h1>
-                  <p className="mt-1 text-sm text-gray-500">
-                    Track open and resolved monitor failures.
-                  </p>
-                </div>
-
-                <div className="flex gap-3">
-                  <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-2 text-sm font-semibold text-red-700">
-                    {openIncidents.length} open
-                  </div>
-                  <div className="rounded-xl border border-gray-200 bg-gray-50 px-4 py-2 text-sm font-semibold text-gray-700">
-                    {resolvedIncidents.length} resolved
-                  </div>
-                </div>
-              </div>
-
-              {loading && (
-                <p className="mt-4 text-sm text-gray-500">Loading incidents...</p>
-              )}
-
-              {error && (
-                <div className="mt-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-                  {error}
-                </div>
-              )}
-            </section>
-
-            <IncidentSection
-              title="Open incidents"
-              incidents={openIncidents}
-              emptyText="No open incidents."
-              actionLabel="Resolve"
-              actionLoadingId={resolvingId}
-              onAction={handleResolve}
-              onOpenMonitor={(monitorId) => navigate(`/monitors/${monitorId}`)}
-            />
-
-            <IncidentSection
-              title="Resolved incidents"
-              incidents={resolvedIncidents}
-              emptyText="No resolved incidents."
-              onOpenMonitor={(monitorId) => navigate(`/monitors/${monitorId}`)}
-            />
-          </main>
+    <AppLayout
+      title="Incidents"
+      subtitle="Track open and resolved monitor failures."
+      actions={
+        <div className="flex gap-3">
+          <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-2 text-sm font-semibold text-red-700">
+            {openIncidents.length} open
+          </div>
+          <div className="rounded-xl border border-brand-border bg-brand-lavenderSoft px-4 py-2 text-sm font-semibold text-brand-text">
+            {resolvedIncidents.length} resolved
+          </div>
         </div>
-      </div>
-    </div>
+      }
+    >
+      {loading && (
+        <section className="app-card">
+          <p className="text-sm text-brand-muted">Loading incidents...</p>
+        </section>
+      )}
+
+      {error && (
+        <AlertMessage type="error" text={error} />
+      )}
+
+      <IncidentSection
+        title="Open incidents"
+        incidents={openIncidents}
+        emptyText="No open incidents."
+        actionLabel="Mark resolved"
+        actionLoadingId={resolvingId}
+        onAction={handleResolve}
+        onOpenMonitor={(monitorId) => navigate(`/monitors/${monitorId}`)}
+      />
+
+      <IncidentSection
+        title="Resolved incidents"
+        incidents={resolvedIncidents}
+        emptyText="No resolved incidents."
+        onOpenMonitor={(monitorId) => navigate(`/monitors/${monitorId}`)}
+      />
+    </AppLayout>
   );
 }
 
@@ -128,13 +112,13 @@ function IncidentSection({
   onOpenMonitor,
 }) {
   return (
-    <section className="rounded-2xl border border-gray-200 bg-white shadow-sm">
-      <div className="border-b border-gray-200 px-4 py-3">
-        <h2 className="text-sm font-semibold text-gray-900">{title}</h2>
+    <section className="app-card overflow-hidden p-0">
+      <div className="app-section-header bg-brand-lavenderSoft px-4 py-3">
+        <h2 className="text-sm font-semibold text-brand-text">{title}</h2>
       </div>
 
       {incidents.length ? (
-        <div className="divide-y divide-gray-100">
+        <div className="divide-y divide-brand-border">
           {incidents.map((incident) => (
             <div
               key={incident.id}
@@ -144,7 +128,7 @@ function IncidentSection({
                 <button
                   type="button"
                   onClick={() => onOpenMonitor?.(incident.monitor?.id)}
-                  className="break-all text-left text-sm font-medium text-gray-900 hover:underline"
+                  className="break-all text-left text-sm font-medium text-brand-text hover:text-brand-blueDeep hover:underline"
                 >
                   {incident.monitor?.url || "Unknown monitor"}
                 </button>
@@ -154,7 +138,7 @@ function IncidentSection({
                     className={[
                       "inline-flex rounded-full px-2.5 py-1 text-xs font-semibold",
                       incident.is_resolved
-                        ? "bg-gray-100 text-gray-700"
+                        ? "bg-brand-lavenderSoft text-brand-text"
                         : "bg-red-100 text-red-700",
                     ].join(" ")}
                   >
@@ -163,28 +147,27 @@ function IncidentSection({
 
                   {incident.monitor?.current_state && (
                     <span
-                      className={[
-                        "inline-flex rounded-full px-2.5 py-1 text-xs font-semibold",
+                      className={
                         incident.monitor.current_state === "UP"
-                          ? "bg-green-100 text-green-700"
-                          : "bg-red-100 text-red-700",
-                      ].join(" ")}
+                          ? "app-badge-up"
+                          : "app-badge-down"
+                      }
                     >
                       Monitor {incident.monitor.current_state}
                     </span>
                   )}
                 </div>
 
-                <div className="mt-2 text-xs text-gray-500">
+                <div className="mt-2 text-xs text-brand-muted">
                   Started: {formatDateTime(incident.started_at)}
                 </div>
 
-                <div className="mt-1 text-xs text-gray-500">
+                <div className="mt-1 text-xs text-brand-muted">
                   Resolved: {formatDateTime(incident.resolved_at)}
                 </div>
 
                 {incident.resolved_by?.email && (
-                  <div className="mt-1 text-xs text-gray-500">
+                  <div className="mt-1 text-xs text-brand-muted">
                     Resolved by: {incident.resolved_by.email}
                   </div>
                 )}
@@ -192,9 +175,10 @@ function IncidentSection({
 
               {onAction ? (
                 <button
+                  type="button"
                   onClick={() => onAction(incident.id)}
                   disabled={actionLoadingId === incident.id}
-                  className="rounded-xl bg-gray-900 px-4 py-2 text-sm font-semibold text-white hover:bg-gray-800 disabled:opacity-60"
+                  className="app-button-primary disabled:opacity-60"
                 >
                   {actionLoadingId === incident.id ? "Resolving..." : actionLabel}
                 </button>
@@ -202,7 +186,7 @@ function IncidentSection({
                 <button
                   type="button"
                   onClick={() => onOpenMonitor?.(incident.monitor?.id)}
-                  className="rounded-xl border border-gray-300 px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50"
+                  className="app-button-outline"
                 >
                   View monitor
                 </button>
@@ -211,10 +195,8 @@ function IncidentSection({
           ))}
         </div>
       ) : (
-        <div className="px-4 py-6 text-sm text-gray-500">{emptyText}</div>
+        <div className="px-4 py-6 text-sm text-brand-muted">{emptyText}</div>
       )}
     </section>
   );
 }
-
-

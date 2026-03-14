@@ -3,6 +3,8 @@ import { Link, Navigate, useNavigate, useParams } from "react-router-dom";
 import { acceptInvite, validateInvite } from "../api/invites";
 import { me } from "../api/auth";
 import { useAuth } from "../auth/AuthContext";
+import AuthLayout from "../components/AuthLayout";
+import AlertMessage from "../components/AlertMessage";
 
 function daysUntilExpiry(expiresAt) {
   if (!expiresAt) return null;
@@ -28,6 +30,7 @@ export default function InvitePage() {
   useEffect(() => {
     const loadInvite = async () => {
       try {
+        setError("");
         const data = await validateInvite(token);
         setInvite(data);
       } catch (err) {
@@ -56,7 +59,6 @@ export default function InvitePage() {
     try {
       await acceptInvite(token);
 
-      // Refresh the current user so AuthContext has the new team attached
       const refreshedUser = await me();
       setUser(refreshedUser);
 
@@ -67,7 +69,12 @@ export default function InvitePage() {
     }
   };
 
-  if (!authLoading && isAuthenticated && user?.team?.name && invite?.team_name === user.team.name) {
+  if (
+    !authLoading &&
+    isAuthenticated &&
+    user?.team?.name &&
+    invite?.team_name === user.team.name
+  ) {
     return <Navigate to="/team" replace />;
   }
 
@@ -75,77 +82,70 @@ export default function InvitePage() {
   const registerLink = `/register?invite=${token}`;
 
   return (
-    <div className="min-h-screen bg-[#f7f7f8] px-4 py-12">
-      <div className="mx-auto flex max-w-2xl flex-col items-center">
-        <div className="mb-8 rounded-lg bg-[#e5e7eb] px-10 py-3 text-sm font-medium text-gray-700">
-          Upty
+    <AuthLayout
+      title={loading ? "Loading invite..." : invite?.team_name || "Team Invite"}
+      subtitle={
+        loading
+          ? "Checking your invitation..."
+          : invite
+          ? "You’ve been invited to join this team on UPTY."
+          : "This invite could not be loaded."
+      }
+    >
+      {loading ? (
+        <p className="text-center text-sm text-brand-muted">Loading invite...</p>
+      ) : error && !invite ? (
+        <div className="space-y-4 text-center">
+          <AlertMessage type="error" text={error} />
+          <Link to="/login" className="w-full app-button-primary">
+            Back to login
+          </Link>
         </div>
+      ) : (
+        <div className="space-y-6 text-center">
+          <div className="rounded-2xl border border-brand-lavender bg-brand-lavenderSoft px-4 py-5">
+            <p className="text-sm text-brand-muted">You&apos;ve been invited to join</p>
+            <h2 className="mt-2 text-2xl font-semibold text-brand-text">
+              {invite?.team_name}
+            </h2>
+          </div>
 
-        <div className="w-full rounded-2xl border border-gray-200 bg-white px-6 py-10 text-center shadow-sm">
-          {loading ? (
-            <p className="text-sm text-gray-500">Loading invite...</p>
-          ) : error && !invite ? (
-            <div>
-              <p className="text-sm font-medium text-red-600">
-                {error}
-              </p>
+          {!authLoading && !isAuthenticated ? (
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               <Link
-                to="/login"
-                className="mt-6 inline-flex rounded-xl bg-gray-900 px-5 py-2.5 text-sm font-semibold text-white hover:bg-gray-800"
+                to={loginLink}
+                className="app-button-outline"
               >
-                Back to login
+                Sign In to Join
+              </Link>
+
+              <Link
+                to={registerLink}
+                className="app-button-primary"
+              >
+                Register to Join
               </Link>
             </div>
-          ) : (
-            <>
-              <p className="text-sm text-gray-500">You&apos;ve been invited to join</p>
-              <h1 className="mt-3 text-3xl font-semibold text-gray-900">
-                {invite?.team_name}
-              </h1>
-            </>
+          ) : !authLoading && isAuthenticated ? (
+            <div className="space-y-4">
+              <button
+                type="button"
+                onClick={handleJoin}
+                disabled={joining}
+                className="w-full app-button-primary disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {joining ? "Joining..." : "Join Team"}
+              </button>
+
+              {error && <AlertMessage type="error" text={error} />}
+            </div>
+          ) : null}
+
+          {expiryText && (
+            <p className="text-sm text-brand-muted">{expiryText}</p>
           )}
         </div>
-
-        {!loading && invite && (
-          <>
-            {!authLoading && !isAuthenticated ? (
-              <div className="mt-10 grid w-full grid-cols-1 gap-4 sm:grid-cols-2">
-                <Link
-                  to={loginLink}
-                  className="inline-flex items-center justify-center rounded-xl border border-gray-900 bg-white px-6 py-4 text-sm font-medium text-gray-900 hover:bg-gray-50"
-                >
-                  Sign In to Join
-                </Link>
-
-                <Link
-                  to={registerLink}
-                  className="inline-flex items-center justify-center rounded-xl bg-gray-900 px-6 py-4 text-sm font-semibold text-white hover:bg-gray-800"
-                >
-                  Register to Join
-                </Link>
-              </div>
-            ) : !authLoading && isAuthenticated ? (
-              <div className="mt-10 w-full max-w-md">
-                <button
-                  onClick={handleJoin}
-                  disabled={joining}
-                  className="w-full rounded-xl bg-gray-900 px-6 py-4 text-sm font-semibold text-white hover:bg-gray-800 disabled:cursor-not-allowed disabled:opacity-60"
-                >
-                  {joining ? "Joining..." : "Join Team"}
-                </button>
-
-                {error && (
-                  <div className="mt-4 rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
-                    {error}
-                  </div>
-                )}
-              </div>
-            ) : null}
-
-            <p className="mt-8 text-sm text-gray-400">{expiryText}</p>
-          </>
-        )}
-      </div>
-    </div>
+      )}
+    </AuthLayout>
   );
 }

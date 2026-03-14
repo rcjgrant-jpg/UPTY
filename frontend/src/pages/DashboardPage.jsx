@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { listMonitors } from "../api/monitors";
 import { listIncidents } from "../api/incidents";
-import Sidebar from "../components/SideBar";
+import AppLayout from "../components/AppLayout";
 
 function formatLastChecked(value) {
   if (!value) return "Never";
@@ -56,7 +56,6 @@ export default function DashboardPage() {
 
   useEffect(() => {
     loadDashboardData();
-
     const interval = setInterval(loadDashboardData, 5000);
     return () => clearInterval(interval);
   }, []);
@@ -65,6 +64,7 @@ export default function DashboardPage() {
     const up = monitors.filter((m) => m.current_state === "UP").length;
     const down = monitors.filter((m) => m.current_state === "DOWN").length;
     const openIncidents = incidents.filter((i) => !i.is_resolved);
+
     return {
       total: monitors.length,
       up,
@@ -75,150 +75,138 @@ export default function DashboardPage() {
   }, [monitors, incidents]);
 
   return (
-    <div className="min-h-screen bg-white">
-      <div className="mx-auto w-full max-w-6xl px-4 py-6">
-        <div className="grid gap-6 md:grid-cols-[240px_1fr]">
-          <Sidebar openIncidentCount={stats.openIncidentCount} />
+    <AppLayout
+      title="Dashboard"
+      subtitle={`${stats.total} monitors · ${stats.up} up · ${stats.down} down`}
+      actions={
+        <button
+          onClick={() => navigate("/monitors/new")}
+          className="app-button-primary"
+        >
+          + New Monitor
+        </button>
+      }
+    >
+      {error && (
+        <section className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+          {error}
+        </section>
+      )}
 
-          <main className="space-y-6">
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-              <div>
-                <h1 className="text-2xl font-semibold text-gray-900">Dashboard</h1>
-                <p className="mt-1 text-sm text-gray-500">
-                  {stats.total} monitors · {stats.up} up · {stats.down} down
-                </p>
-              </div>
-
-              <button
-                onClick={() => navigate("/monitors/new")}
-                className="inline-flex items-center justify-center rounded-xl bg-gray-900 px-4 py-2 text-sm font-semibold text-white hover:bg-gray-800"
-              >
-                + New Monitor
-              </button>
+      {stats.openIncidentCount > 0 && (
+        <section className="app-card border-red-200 bg-red-50">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <h2 className="text-sm font-semibold text-red-800">
+                Active incident alert
+              </h2>
+              <p className="mt-1 text-sm text-red-700">
+                {stats.openIncidentCount} open incident
+                {stats.openIncidentCount === 1 ? "" : "s"} need attention.
+              </p>
             </div>
 
-            {error && (
-              <section className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-                {error}
-              </section>
-            )}
+            <button
+              onClick={() => navigate("/incidents")}
+              className="app-button-outline border-red-300 text-red-700 hover:bg-red-100"
+            >
+              View incidents
+            </button>
+          </div>
 
-            {stats.openIncidentCount > 0 && (
-              <section className="rounded-2xl border border-red-200 bg-red-50 p-4 shadow-sm">
-                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                  <div>
-                    <h2 className="text-sm font-semibold text-red-800">
-                      Active incident alert
-                    </h2>
-                    <p className="mt-1 text-sm text-red-700">
-                      {stats.openIncidentCount} open incident
-                      {stats.openIncidentCount === 1 ? "" : "s"} need attention.
-                    </p>
-                  </div>
-
-                  <button
-                    onClick={() => navigate("/incidents")}
-                    className="rounded-xl border border-red-300 bg-white px-4 py-2 text-sm font-semibold text-red-700 hover:bg-red-100"
-                  >
-                    View incidents
-                  </button>
+          <div className="mt-4 space-y-3">
+            {stats.openIncidents.slice(0, 3).map((incident) => (
+              <div
+                key={incident.id}
+                className="rounded-xl border border-red-100 bg-white px-4 py-3"
+              >
+                <div className="break-all text-sm font-medium text-brand-text">
+                  {incident.monitor?.url}
                 </div>
-
-                <div className="mt-4 space-y-3">
-                  {stats.openIncidents.slice(0, 3).map((incident) => (
-                    <div
-                      key={incident.id}
-                      className="rounded-xl border border-red-100 bg-white px-4 py-3"
-                    >
-                      <div className="text-sm font-medium text-gray-900 break-all">
-                        {incident.monitor?.url}
-                      </div>
-                      <div className="mt-1 text-xs text-gray-500">
-                        Started: {formatDateTime(incident.started_at)}
-                      </div>
-                    </div>
-                  ))}
+                <div className="mt-1 text-xs text-brand-muted">
+                  Started: {formatDateTime(incident.started_at)}
                 </div>
-              </section>
-            )}
-
-            <section className="grid gap-4 sm:grid-cols-3">
-              <StatCard label="Total monitors" value={stats.total} />
-              <StatCard label="Currently up" value={stats.up} />
-              <StatCard label="Open incidents" value={stats.openIncidentCount} />
-            </section>
-
-            <section className="rounded-2xl border border-gray-200 bg-white shadow-sm">
-              <div className="grid grid-cols-12 gap-3 border-b border-gray-200 px-4 py-3 text-[11px] font-semibold tracking-wide text-gray-500">
-                <div className="col-span-6">URL</div>
-                <div className="col-span-2">STATUS</div>
-                <div className="col-span-2">INTERVAL</div>
-                <div className="col-span-2">LAST CHECK</div>
               </div>
+            ))}
+          </div>
+        </section>
+      )}
 
-              {loading ? (
-                <div className="px-4 py-6 text-sm text-gray-500">Loading monitors...</div>
-              ) : monitors.length > 0 ? (
-                <div className="divide-y divide-gray-100">
-                  {monitors.map((monitor) => (
-                    <button
-                      key={monitor.id}
-                      onClick={() => navigate(`/monitors/${monitor.id}`)}
-                      className="grid w-full grid-cols-12 gap-3 px-4 py-3 text-left hover:bg-gray-50"
-                    >
-                      <div className="col-span-6">
-                        <div className="break-all text-sm font-medium text-gray-900 hover:underline">
-                          {monitor.url}
-                        </div>
-                      </div>
+      <section className="grid gap-4 sm:grid-cols-3">
+        <StatCard label="Total monitors" value={stats.total} accent={true} />
+        <StatCard label="Currently up" value={stats.up} accent={true} />
+        <StatCard label="Open incidents" value={stats.openIncidentCount} accent={true} />
+      </section>
 
-                      <div className="col-span-2 flex items-center">
-                        <span
-                          className={[
-                            "inline-flex rounded-full px-2.5 py-1 text-xs font-semibold",
-                            monitor.current_state === "UP"
-                              ? "bg-green-100 text-green-700"
-                              : "bg-red-100 text-red-700",
-                          ].join(" ")}
-                        >
-                          {monitor.current_state}
-                        </span>
-                      </div>
-
-                      <div className="col-span-2 flex items-center text-sm text-gray-600">
-                        {monitor.interval}s
-                      </div>
-
-                      <div className="col-span-2 flex items-center text-sm text-gray-500">
-                        {formatLastChecked(monitor.last_checked_at)}
-                      </div>
-                    </button>
-                  ))}
-                </div>
-              ) : (
-                <div className="px-4 py-10 text-center">
-                  <p className="text-sm text-gray-500">No monitors yet.</p>
-                  <button
-                    onClick={() => navigate("/monitors/new")}
-                    className="mt-4 inline-flex items-center justify-center rounded-xl bg-gray-900 px-4 py-2 text-sm font-semibold text-white hover:bg-gray-800"
-                  >
-                    Add your first monitor
-                  </button>
-                </div>
-              )}
-            </section>
-          </main>
+      <section className="app-card overflow-hidden p-0">
+        <div className="grid grid-cols-12 gap-3 app-section-header text-[11px] font-semibold tracking-wide text-brand-muted">
+          <div className="col-span-6">URL</div>
+          <div className="col-span-2">STATUS</div>
+          <div className="col-span-2">INTERVAL</div>
+          <div className="col-span-2">LAST CHECK</div>
         </div>
-      </div>
-    </div>
+
+        {loading ? (
+          <div className="px-4 py-6 text-sm text-brand-muted">
+            Loading monitors...
+          </div>
+        ) : monitors.length > 0 ? (
+          <div className="divide-y divide-brand-border">
+            {monitors.map((monitor) => (
+              <button
+                key={monitor.id}
+                onClick={() => navigate(`/monitors/${monitor.id}`)}
+                className="grid w-full grid-cols-12 gap-3 px-4 py-3 text-left transition hover:bg-brand-cream"
+              >
+                <div className="col-span-6">
+                  <div className="break-all text-sm font-medium text-brand-text hover:underline">
+                    {monitor.url}
+                  </div>
+                </div>
+
+                <div className="col-span-2 flex items-center">
+                  <span
+                    className={
+                      monitor.current_state === "UP"
+                        ? "app-badge-up"
+                        : "app-badge-down"
+                    }
+                  >
+                    {monitor.current_state}
+                  </span>
+                </div>
+
+                <div className="col-span-2 flex items-center text-sm text-brand-text">
+                  {monitor.interval}s
+                </div>
+
+                <div className="col-span-2 flex items-center text-sm text-brand-muted">
+                  {formatLastChecked(monitor.last_checked_at)}
+                </div>
+              </button>
+            ))}
+          </div>
+        ) : (
+          <div className="px-4 py-10 text-center">
+            <p className="text-sm text-brand-muted">No monitors yet.</p>
+            <button
+              onClick={() => navigate("/monitors/new")}
+              className="mt-4 app-button-primary"
+            >
+              Add your first monitor
+            </button>
+          </div>
+        )}
+      </section>
+    </AppLayout>
   );
 }
 
-function StatCard({ label, value }) {
+function StatCard({ label, value, accent = false }) {
   return (
-    <div className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm">
-      <div className="text-xs font-medium text-gray-500">{label}</div>
-      <div className="mt-1 text-2xl font-semibold text-gray-900">{value}</div>
+    <div className={accent ? "app-card-accent" : "app-card"}>
+      <div className="text-xs font-medium text-brand-muted">{label}</div>
+      <div className="mt-1 text-2xl font-semibold text-brand-text">{value}</div>
     </div>
   );
 }
