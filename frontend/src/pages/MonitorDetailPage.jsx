@@ -99,7 +99,7 @@ export default function MonitorDetailPage() {
         <AlertMessage type="error" text={error} />
       ) : (
         <>
-          <section className="app-card bg-brand-yellowSoft">
+          <section className="app-card bg-brand-lavenderSoft">
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
               <InfoCard label="Interval" value={`${monitor.interval}s`} />
               <InfoCard label="Timeout" value={`${monitor.timeout}ms`} />
