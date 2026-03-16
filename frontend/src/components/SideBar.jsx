@@ -1,5 +1,6 @@
 import { NavLink, useNavigate } from "react-router-dom";
 import { useAuth } from "../auth/AuthContext";
+import Logo from "../components/Logo";
 
 export default function Sidebar({ openIncidentCount = 0 }) {
   const navigate = useNavigate();
@@ -40,26 +41,23 @@ export default function Sidebar({ openIncidentCount = 0 }) {
   };
 
   return (
-    <aside className="flex h-full flex-col rounded-2xl border border-brand-lavender bg-brand-surface p-4 shadow-soft">
+    <aside className="sticky top-0 flex h-screen w-42 shrink-0 flex-col border-r border-brand-lavender bg-brand-surface p-4 shadow-soft">
       <NavLink
         to="/dashboard"
-        className="flex items-center gap-3 rounded-2xl bg-brand-yellowSoft p-3"
+        className="rounded-2xl bg-brand-lavenderSoft p-4"
       >
-        <div className="grid h-10 w-10 place-items-center rounded-xl bg-brand-yellow text-sm font-bold text-brand-text">
-          U
-        </div>
+        <div className="flex flex-col items-center text-center">
+          <Logo size={100} />
 
-        <div className="min-w-0">
-          <div className="text-sm font-semibold text-brand-text">Upty</div>
           {user?.email && (
-            <div className="max-w-[160px] truncate text-xs text-brand-muted">
+            <div className="mt-3 max-w-full truncate text-xs text-brand-muted">
               {user.email}
             </div>
           )}
         </div>
       </NavLink>
 
-      <nav className="mt-6 space-y-2">
+      <nav className="mt-6 flex-1 space-y-2 overflow-y-auto">
         {navItems.map((item) => (
           <NavLink key={item.to} to={item.to} end className={itemClass}>
             {({ isActive }) => (
@@ -80,7 +78,7 @@ export default function Sidebar({ openIncidentCount = 0 }) {
         ))}
       </nav>
 
-      <div className="mt-auto space-y-3 pt-6">
+      <div className="space-y-3 pt-6">
         <NavLink to="/settings" end className={itemClass}>
           {({ isActive }) => (
             <div className="flex items-center gap-3">
@@ -90,7 +88,11 @@ export default function Sidebar({ openIncidentCount = 0 }) {
           )}
         </NavLink>
 
-        <button onClick={handleLogout} className="w-full app-button-outline">
+        <button
+          type="button"
+          onClick={handleLogout}
+          className="w-full app-button-outline"
+        >
           Log out
         </button>
       </div>

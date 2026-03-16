@@ -10,57 +10,10 @@ from .serializers import (
     UserSerializer, TeamSerializer, MonitorSerializer,
     MonitorResultSerializer, IncidentSerializer
 )
+from django.contrib.auth.password_validation import validate_password
+from django.core.exceptions import ValidationError
 
 # AUTH VIEWS
-
-# @api_view(['POST'])
-# @permission_classes([AllowAny])  # Anyone can register (no login required)
-# def register(request):
-#     """
-#     Create a new user and team.
-    
-#     Expected JSON:
-#     {
-#         "email": "user@example.com",
-#         "password": "securepassword",
-#         "team_name": "My Startup"
-#     }
-#     """
-#     email = request.data.get('email')
-#     password = request.data.get('password')
-#     team_name = request.data.get('team_name')
-    
-#     # Check if email already exists
-#     if User.objects.filter(email=email).exists():
-#         return Response(
-#             {'error': 'Email already exists'}, 
-#             status=status.HTTP_400_BAD_REQUEST
-#         )
-    
-#     # Create user (username = email for simplicity)
-#     user = User.objects.create_user(
-#         username=email,
-#         email=email,
-#         password=password
-#     )
-    
-#     # Create team
-#     team = Team.objects.create(name=team_name)
-    
-#     # Add user to team
-#     TeamMember.objects.create(team=team, user=user)
-    
-#     # Log the user in
-#     login(request, user)
-    
-#     return Response({
-#         'id': user.id,
-#         'email': user.email,
-#         'team': {
-#             'id': team.id,
-#             'name': team.name
-#         }
-#     }, status=status.HTTP_201_CREATED)
 
 @api_view(['POST'])
 @permission_classes([AllowAny])
@@ -96,6 +49,14 @@ def register(request):
     if User.objects.filter(email=email).exists():
         return Response(
             {'error': 'Email already exists'},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+        
+    try:
+        validate_password(password)
+    except ValidationError as e:
+        return Response(
+            {'error': ' '.join(e.messages)},
             status=status.HTTP_400_BAD_REQUEST
         )
 
@@ -154,12 +115,20 @@ def accept_invite(request, token):
     try:
         invite = Invite.objects.get(token=token)
     except Invite.DoesNotExist:
-        return Response({
-            'error': 'Invite not found'
-        }, status=status.HTTP_400_BAD_REQUEST)
+        return Response(
+            {'error': 'Invite not found'},
+            status=status.HTTP_400_BAD_REQUEST
+        )
 
-    # If the user is already in the invited team, treat it as success
-    if TeamMember.objects.filter(team=invite.team, user=request.user).exists():
+    if not invite.is_valid:
+        return Response(
+            {'error': 'Invite expired or already used'},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+
+    current_membership = TeamMember.objects.filter(user=request.user).first()
+
+    if current_membership and current_membership.team_id == invite.team.id:
         return Response({
             'message': 'Already a member of this team',
             'team': {
@@ -168,12 +137,9 @@ def accept_invite(request, token):
             }
         }, status=status.HTTP_200_OK)
 
-    if not invite.is_valid:
-        return Response({
-            'error': 'Invite expired or already used'
-        }, status=status.HTTP_400_BAD_REQUEST)
+    if current_membership:
+        current_membership.delete()
 
-    TeamMember.objects.filter(user=request.user).delete()
     TeamMember.objects.create(team=invite.team, user=request.user)
 
     invite.accepted = True
@@ -486,46 +452,46 @@ def validate_invite(request, token):
     })
 
 
-@api_view(['POST'])
-@permission_classes([IsAuthenticated])
-def accept_invite(request, token):
-    """
-    POST: Accept an invite and join the team
-    """
-    from .models import Invite
+# @api_view(['POST'])
+# @permission_classes([IsAuthenticated])
+# def accept_invite(request, token):
+#     """
+#     POST: Accept an invite and join the team
+#     """
+#     from .models import Invite
 
-    try:
-        invite = Invite.objects.get(token=token)
-    except Invite.DoesNotExist:
-        return Response({
-            'error': 'Invite not found'
-        }, status=status.HTTP_400_BAD_REQUEST)
+#     try:
+#         invite = Invite.objects.get(token=token)
+#     except Invite.DoesNotExist:
+#         return Response({
+#             'error': 'Invite not found'
+#         }, status=status.HTTP_400_BAD_REQUEST)
 
-    if not invite.is_valid:
-        return Response({
-            'error': 'Invite expired or already used'
-        }, status=status.HTTP_400_BAD_REQUEST)
+#     if not invite.is_valid:
+#         return Response({
+#             'error': 'Invite expired or already used'
+#         }, status=status.HTTP_400_BAD_REQUEST)
 
-    # Check if user is already in this team
-    if TeamMember.objects.filter(team=invite.team, user=request.user).exists():
-        return Response({
-            'error': 'You are already in this team'
-        }, status=status.HTTP_400_BAD_REQUEST)
+#     # Check if user is already in this team
+#     if TeamMember.objects.filter(team=invite.team, user=request.user).exists():
+#         return Response({
+#             'error': 'You are already in this team'
+#         }, status=status.HTTP_400_BAD_REQUEST)
 
-    # Add user to team
-    TeamMember.objects.create(team=invite.team, user=request.user)
+#     # Add user to team
+#     TeamMember.objects.create(team=invite.team, user=request.user)
 
-    # Mark invite as used
-    invite.accepted = True
-    invite.save()
+#     # Mark invite as used
+#     invite.accepted = True
+#     invite.save()
 
-    return Response({
-        'message': 'Successfully joined team',
-        'team': {
-            'id': invite.team.id,
-            'name': invite.team.name
-        }
-    })
+#     return Response({
+#         'message': 'Successfully joined team',
+#         'team': {
+#             'id': invite.team.id,
+#             'name': invite.team.name
+#         }
+#     })
 
 # SETTINGS VIEWS
 
@@ -559,13 +525,13 @@ def update_email(request):
         'email': request.user.email
     })
 
+from django.contrib.auth.password_validation import validate_password
+from django.contrib.auth import update_session_auth_hash
+from django.core.exceptions import ValidationError
 
 @api_view(['PUT'])
 @permission_classes([IsAuthenticated])
 def update_password(request):
-    """
-    PUT: Update user's password
-    """
     current_password = request.data.get('current_password')
     new_password = request.data.get('new_password')
 
@@ -575,14 +541,23 @@ def update_password(request):
             status=status.HTTP_400_BAD_REQUEST
         )
 
-    # Verify current password
     if not request.user.check_password(current_password):
         return Response(
             {'error': 'Current password is incorrect'},
             status=status.HTTP_400_BAD_REQUEST
         )
 
+    try:
+        validate_password(new_password, request.user)
+    except ValidationError as e:
+        return Response(
+            {'error': ' '.join(e.messages)},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+
     request.user.set_password(new_password)
     request.user.save()
+
+    update_session_auth_hash(request, request.user)
 
     return Response({'message': 'Password updated successfully'})

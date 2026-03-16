@@ -27,6 +27,12 @@ export default function InvitePage() {
   const [joining, setJoining] = useState(false);
   const [error, setError] = useState("");
 
+  const isSwitchingTeams =
+  isAuthenticated &&
+  user?.team?.name &&
+  invite?.team_name &&
+  user.team.name !== invite.team_name;
+
   useEffect(() => {
     const loadInvite = async () => {
       try {
@@ -77,7 +83,8 @@ export default function InvitePage() {
   ) {
     return <Navigate to="/team" replace />;
   }
-
+  
+  const nextPath = encodeURIComponent(`/invite/${token}`);
   const loginLink = `/login?invite=${token}`;
   const registerLink = `/register?invite=${token}`;
 
@@ -128,13 +135,31 @@ export default function InvitePage() {
             </div>
           ) : !authLoading && isAuthenticated ? (
             <div className="space-y-4">
+              {isSwitchingTeams && (
+                <div className="rounded-2xl border border-amber-300 bg-amber-50 px-4 py-4 text-left">
+                  
+                  <p className="mt-1 text-sm text-amber-700">
+                    You are already a member of <strong>{user.team.name}</strong>.
+                    Joining <strong>{invite?.team_name}</strong> will remove you from your
+                    current team.
+                  </p>
+                  <p className="mt-2 text-sm text-amber-700">
+                    Do you want to leave your current team and continue?
+                  </p>
+                </div>
+              )}
+
               <button
                 type="button"
                 onClick={handleJoin}
                 disabled={joining}
                 className="w-full app-button-primary disabled:cursor-not-allowed disabled:opacity-60"
               >
-                {joining ? "Joining..." : "Join Team"}
+                {joining
+                  ? "Joining..."
+                  : isSwitchingTeams
+                  ? "Leave Current Team and Join"
+                  : "Join Team"}
               </button>
 
               {error && <AlertMessage type="error" text={error} />}

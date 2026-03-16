@@ -16,6 +16,10 @@ export default function SettingsPage() {
   const [confirmNewPassword, setConfirmNewPassword] = useState("");
   const [pwMsg, setPwMsg] = useState(null);
 
+  const hasMinLength = newPassword.length >= 8;
+  const hasDigit = /\d/.test(newPassword);
+  const hasSpecialCharacter = /[^\w\s]/.test(newPassword);
+
   const handleUpdateEmail = async (e) => {
     e.preventDefault();
     setEmailMsg(null);
@@ -129,6 +133,15 @@ export default function SettingsPage() {
             placeholder="••••••••"
             required
           />
+
+          <div className="mt-1 rounded-xl bg-brand-surface px-3 py-2 text-sm text-brand-muted">
+            <p className="font-medium">New password requirements:</p>
+            <ul className="mt-1 space-y-1">
+              <li>{hasMinLength ? "✓" : "•"} At least 8 characters</li>
+              <li>{hasDigit ? "✓" : "•"} At least 1 number</li>
+              <li>{hasSpecialCharacter ? "✓" : "•"} At least 1 special character</li>
+            </ul>
+          </div>
 
           {pwMsg && (
             <AlertMessage type={pwMsg.type} text={pwMsg.text} />
