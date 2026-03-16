@@ -166,7 +166,7 @@ function MemberRow({ email, joined }) {
 
   return (
     <div className="flex items-center gap-4 px-5 py-4">
-      <div className="grid h-10 w-10 place-items-center rounded-full bg-brand-yellowSoft text-xs font-semibold text-brand-text">
+      <div className="grid h-10 w-10 place-items-center rounded-full bg-brand-yellow text-xs font-semibold text-brand-text">
         {initials}
       </div>
 

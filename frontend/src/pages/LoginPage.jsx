@@ -48,8 +48,8 @@ export default function LoginPage() {
 
   return (
     <AuthLayout
-      title="Sign in to your account"
-      subtitle="Monitor uptime, incidents, and your team in one place."
+      title="Sign in"
+      
     >
       <form onSubmit={handleSubmit} className="space-y-4">
         <TextField
