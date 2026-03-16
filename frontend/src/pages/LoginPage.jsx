@@ -14,7 +14,9 @@ export default function LoginPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const [searchParams] = useSearchParams();
+
   const inviteToken = searchParams.get("invite");
+  const next = searchParams.get("next");
 
   const { login, isAuthenticated, authLoading } = useAuth();
 
@@ -23,9 +25,9 @@ export default function LoginPage() {
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
-  const redirectTo = inviteToken
-    ? `/invite/${inviteToken}`
-    : location.state?.from?.pathname || "/dashboard";
+  const redirectTo =
+    next ||
+    (inviteToken ? `/invite/${inviteToken}` : location.state?.from?.pathname || "/dashboard");
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -47,10 +49,7 @@ export default function LoginPage() {
   }
 
   return (
-    <AuthLayout
-      title="Sign in"
-      
-    >
+    <AuthLayout title="Sign in">
       <form onSubmit={handleSubmit} className="space-y-4">
         <TextField
           label="Email"
@@ -88,7 +87,13 @@ export default function LoginPage() {
       <p className="mt-6 text-center text-sm text-brand-muted">
         No account?{" "}
         <Link
-          to={inviteToken ? `/register?invite=${inviteToken}` : "/register"}
+          to={
+            next
+              ? `/register?next=${encodeURIComponent(next)}${inviteToken ? `&invite=${inviteToken}` : ""}`
+              : inviteToken
+              ? `/register?invite=${inviteToken}`
+              : "/register"
+          }
           className="font-semibold text-brand-blueDeep hover:underline"
         >
           Register

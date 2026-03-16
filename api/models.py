@@ -32,10 +32,10 @@ class TeamMember(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='memberships')
     joined_at = models.DateTimeField(auto_now_add=True)
 
-class Meta:
-    constraints = [
-        models.UniqueConstraint(fields=['user'], name='unique_user_per_team')
-    ]
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=['user'], name='unique_user_per_team')
+        ]
 
     def __str__(self):
         return f"{self.user.email} in {self.team.name}"
