@@ -24,7 +24,7 @@ export default function Sidebar({ openIncidentCount = 0 }) {
     <span
       className={[
         "h-4 w-4 rounded-md transition",
-        isActive ? "bg-brand-yellow" : "bg-brand-lavender",
+        isActive ? "bg-brand-blueDeep" : "bg-brand-lavender",
       ].join(" ")}
     />
   );

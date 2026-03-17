@@ -16,7 +16,7 @@ body {
 
 @layer base {
   body {
-    @apply bg-brand-cream text-brand-text;
+    @apply bg-brand-surface text-brand-text;
   }
 
   h1,
@@ -35,7 +35,7 @@ body {
 
 @layer components {
   .app-page {
-    @apply min-h-screen bg-brand-cream text-brand-text;
+    @apply min-h-screen bg-brand-surface text-brand-text;
   }
 
   .app-container {

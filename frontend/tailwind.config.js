@@ -8,11 +8,11 @@ module.exports = {
     extend: {
       colors: {
         brand: {
-          yellow: "#F9DC82",       // Jasmine
+          yellow: "#808BDA",       // Jasmine
           yellowSoft: "#FFF4CC",   // lighter jasmine tint
           lavender: "#95A1F8",     // Wisteria Blue
           lavenderSoft: "#EEF1FF", // soft tinted background
-          blue: "#7157F7",         // Majorelle Blue
+          blue: "#5651E5",         // Majorelle Blue
           blueDeep: "#2854C5",     // Sapphire
 
           cream: "#FFFDF7",
