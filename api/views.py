@@ -12,6 +12,7 @@ from .serializers import (
 )
 from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError
+import os
 
 # AUTH VIEWS
 
@@ -415,12 +416,13 @@ def create_invite(request):
         invited_by=request.user
     )
 
+    frontend_base_url = os.getenv("FRONTEND_BASE_URL", "http://localhost:5173").rstrip("/")
+
     return Response({
         'token': invite.token,
-        'url': f'http://localhost:5173/invite/{invite.token}',
+        'url': f'{frontend_base_url}/invite/{invite.token}',
         'expires_at': invite.expires_at
     }, status=status.HTTP_201_CREATED)
-
 
 @api_view(['GET'])
 @permission_classes([AllowAny])
