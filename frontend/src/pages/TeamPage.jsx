@@ -39,7 +39,7 @@ export default function TeamPage() {
 
     try {
       const data = await createInvite();
-      setInviteLink(data.url || "");
+      setInviteLink(`${window.location.origin}/invite/${data.token}`);
       setCopied(false);
     } catch (err) {
       setError(err.message || "Failed to generate invite link");

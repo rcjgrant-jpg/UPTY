@@ -419,9 +419,8 @@ def create_invite(request):
     frontend_base_url = os.getenv("FRONTEND_BASE_URL", "http://localhost:5173").rstrip("/")
 
     return Response({
-        'token': invite.token,
-        'url': f'{frontend_base_url}/invite/{invite.token}',
-        'expires_at': invite.expires_at
+    'token': invite.token,
+    'expires_at': invite.expires_at
     }, status=status.HTTP_201_CREATED)
 
 @api_view(['GET'])
