@@ -41,7 +41,7 @@ export default function Sidebar({ openIncidentCount = 0 }) {
   };
 
   return (
-    <aside className="sticky top-0 flex h-screen w-42 shrink-0 flex-col border-r border-brand-lavender bg-brand-surface p-4 shadow-soft">
+    <aside className="flex w-full flex-col rounded-2xl border border-brand-lavender bg-brand-surface p-4 shadow-soft md:sticky md:top-6 md:h-[calc(100vh-3rem)] md:w-[240px] md:shrink-0">
       <NavLink
         to="/dashboard"
         className="rounded-2xl bg-brand-lavenderSoft p-4"
@@ -57,7 +57,7 @@ export default function Sidebar({ openIncidentCount = 0 }) {
         </div>
       </NavLink>
 
-      <nav className="mt-6 flex-1 space-y-2 overflow-y-auto">
+      <nav className="mt-6 space-y-2 md:flex-1 md:overflow-y-auto">
         {navItems.map((item) => (
           <NavLink key={item.to} to={item.to} end className={itemClass}>
             {({ isActive }) => (

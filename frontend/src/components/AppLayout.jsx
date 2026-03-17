@@ -10,7 +10,7 @@ export default function AppLayout({ title, subtitle, actions, children }) {
         <div className="grid gap-6 md:grid-cols-[240px_1fr]">
           <Sidebar openIncidentCount={openIncidentCount} />
 
-          <main className="space-y-6">
+          <main className="min-w-0 space-y-6">
             {(title || subtitle || actions) && (
               <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
                 <div>
