@@ -47,7 +47,7 @@ export default function Sidebar({ openIncidentCount = 0 }) {
         className="rounded-2xl bg-brand-lavenderSoft p-4"
       >
         <div className="flex flex-col items-center text-center">
-          <Logo size={100} />
+          <Logo size={150} />
 
           {user?.email && (
             <div className="mt-3 max-w-full truncate text-xs text-brand-muted">
