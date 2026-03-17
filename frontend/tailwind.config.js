@@ -18,7 +18,7 @@ module.exports = {
           cream: "#FFFDF7",
           surface: "#FFFFFF",
           text: "#1F2937",
-          muted: "#6B7280",
+          muted: "#4B5563",
           border: "#E5E7EB",
         },
       },
