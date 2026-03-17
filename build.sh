@@ -8,10 +8,10 @@ apt-get update && apt-get install -y libjpeg-dev zlib1g-dev nodejs npm
 pip install --upgrade pip
 pip install -r requirements.txt
 
-# Build React frontend
+# Build React frontend with production API URL
 cd frontend
 npm install
-npm run build
+VITE_API_URL="/api" npm run build
 cd ..
 
 # Django setup
