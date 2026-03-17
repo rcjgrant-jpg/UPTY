@@ -15,9 +15,30 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 from django.contrib import admin
-from django.urls import path, include
+from django.urls import path, include, re_path
+from django.conf import settings
+from django.conf.urls.static import static
+from django.views.static import serve
+from . import views
+import os
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('api/', include('api.urls')),  # All api/ routes go to api/urls.py
+    path('api/', include('api.urls')),
+]
+
+# Serve static assets from frontend/dist/assets
+urlpatterns += [
+    re_path(r'^assets/(?P<path>.*)$', serve, {
+        'document_root': os.path.join(settings.BASE_DIR, 'frontend', 'dist', 'assets'),
+    }),
+    re_path(r'^Icon\.svg$', serve, {
+        'document_root': os.path.join(settings.BASE_DIR, 'frontend', 'dist'),
+        'path': 'Icon.svg'
+    }),
+]
+
+# Catch-all: serve React index.html for frontend routes
+urlpatterns += [
+    re_path(r'^.*$', views.index, name='index'),
 ]
