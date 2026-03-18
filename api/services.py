@@ -1,11 +1,5 @@
 import time
 import httpx
-from django.utils import timezone
-from .models import Monitor, MonitorResult, Incident, NotificationLog
-from django.conf import settings
-
-import time
-import httpx
 from django.conf import settings
 from django.utils import timezone
 from .models import Monitor, MonitorResult, Incident, NotificationLog
@@ -89,7 +83,6 @@ def process_monitor_result(monitor, is_up):
         if was_up:
             create_incident(monitor)
     else:
-        monitor.current_state = "UP"
         monitor.save()
 
 

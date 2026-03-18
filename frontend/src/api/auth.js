@@ -11,13 +11,6 @@ export function login(email, password) {
   });
 }
 
-// export function register(email, password, team_name) {
-//   return apiFetch("/auth/register", {
-//     method: "POST",
-//     body: { email, password, team_name },
-//   });
-// }
-
 export function register(email, password, team_name, invite_token = null) {
   return apiFetch("/auth/register", {
     method: "POST",

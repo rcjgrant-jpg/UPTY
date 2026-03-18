@@ -12,6 +12,8 @@ from .serializers import (
 )
 from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError
+from django.contrib.auth import update_session_auth_hash
+from django.utils import timezone
 import os
 
 # AUTH VIEWS
@@ -336,8 +338,6 @@ def resolve_incident(request, pk):
     """
     POST: Mark an incident as resolved
     """
-    from django.utils import timezone
-
     membership = request.user.memberships.first()
     if not membership:
         return Response(
@@ -400,7 +400,6 @@ def create_invite(request):
     """
     POST: Generate an invite link for the team
     """
-    from .models import Invite
 
     membership = request.user.memberships.first()
     if not membership:
@@ -416,8 +415,6 @@ def create_invite(request):
         invited_by=request.user
     )
 
-    frontend_base_url = os.getenv("FRONTEND_BASE_URL", "http://localhost:5173").rstrip("/")
-
     return Response({
     'token': invite.token,
     'expires_at': invite.expires_at
@@ -429,8 +426,6 @@ def validate_invite(request, token):
     """
     GET: Check if invite token is valid
     """
-    from .models import Invite
-
     try:
         invite = Invite.objects.get(token=token)
     except Invite.DoesNotExist:
@@ -451,48 +446,6 @@ def validate_invite(request, token):
         'invited_by': invite.invited_by.email,
         'expires_at': invite.expires_at
     })
-
-
-# @api_view(['POST'])
-# @permission_classes([IsAuthenticated])
-# def accept_invite(request, token):
-#     """
-#     POST: Accept an invite and join the team
-#     """
-#     from .models import Invite
-
-#     try:
-#         invite = Invite.objects.get(token=token)
-#     except Invite.DoesNotExist:
-#         return Response({
-#             'error': 'Invite not found'
-#         }, status=status.HTTP_400_BAD_REQUEST)
-
-#     if not invite.is_valid:
-#         return Response({
-#             'error': 'Invite expired or already used'
-#         }, status=status.HTTP_400_BAD_REQUEST)
-
-#     # Check if user is already in this team
-#     if TeamMember.objects.filter(team=invite.team, user=request.user).exists():
-#         return Response({
-#             'error': 'You are already in this team'
-#         }, status=status.HTTP_400_BAD_REQUEST)
-
-#     # Add user to team
-#     TeamMember.objects.create(team=invite.team, user=request.user)
-
-#     # Mark invite as used
-#     invite.accepted = True
-#     invite.save()
-
-#     return Response({
-#         'message': 'Successfully joined team',
-#         'team': {
-#             'id': invite.team.id,
-#             'name': invite.team.name
-#         }
-#     })
 
 # SETTINGS VIEWS
 
@@ -525,10 +478,6 @@ def update_email(request):
         'id': request.user.id,
         'email': request.user.email
     })
-
-from django.contrib.auth.password_validation import validate_password
-from django.contrib.auth import update_session_auth_hash
-from django.core.exceptions import ValidationError
 
 @api_view(['PUT'])
 @permission_classes([IsAuthenticated])

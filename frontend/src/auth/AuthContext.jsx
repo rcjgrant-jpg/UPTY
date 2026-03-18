@@ -36,19 +36,12 @@ export function AuthProvider({ children }) {
     return loggedInUser;
   };
 
-  // const register = async (email, password, teamName) => {
-  //   await getCsrfCookie();
-  //   const newUser = await registerRequest(email, password, teamName);
-  //   setUser(newUser);
-  //   return newUser;
-  // };
-
   const register = async (email, password, teamName, inviteToken = null) => {
-  await getCsrfCookie();
-  const newUser = await registerRequest(email, password, teamName, inviteToken);
-  setUser(newUser);
-  return newUser;
-};
+    await getCsrfCookie();
+    const newUser = await registerRequest(email, password, teamName, inviteToken);
+    setUser(newUser);
+    return newUser;
+  };
 
   const logout = async () => {
     try {

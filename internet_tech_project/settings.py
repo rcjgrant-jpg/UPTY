@@ -27,10 +27,10 @@ MONITOR_VERIFY_SSL = os.getenv("MONITOR_VERIFY_SSL", "true").lower() == "true"
 # See https://docs.djangoproject.com/en/4.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-fb+niulje(7zx0tlr!7^%#3%=y87t9pxwkt(v+l$#d3ua&mivz'
+SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-fb+niulje(7zx0tlr!7^%#3%=y87t9pxwkt(v+l$#d3ua&mivz')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = os.getenv('DEBUG', 'True').lower() == 'true'
 
 ALLOWED_HOSTS = [
     "127.0.0.1",
@@ -70,8 +70,6 @@ CSRF_COOKIE_SECURE = not DEBUG
 # Needed if frontend and backend remain on different HTTPS domains
 SESSION_COOKIE_SAMESITE = "Lax"
 CSRF_COOKIE_SAMESITE = "Lax"
-SESSION_COOKIE_SECURE = False 
-CSRF_COOKIE_SECURE = False
 
 # Application definition
 
@@ -88,9 +86,9 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
+    'django.middleware.security.SecurityMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware',
     'corsheaders.middleware.CorsMiddleware',
-    'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
